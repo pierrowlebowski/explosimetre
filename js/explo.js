@@ -49,7 +49,7 @@
   const voyant = document.getElementById("voyant");
   const texteEtat = document.getElementById("texteEtat");
 
-  /* Un écran ouvert depuis le pupitre par « Ouvrir l'écran » porte ?apercu :
+  /* Un écran ouvert depuis le pupitre par « Voir l'explo » porte ?apercu :
      c'est le formateur qui vérifie son réglage, pas un stagiaire. Il ne doit
      donc pas peser dans le compteur. */
   const apercu = new URLSearchParams(location.search).has("apercu");

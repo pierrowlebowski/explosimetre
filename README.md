@@ -128,7 +128,7 @@ Trois choses à savoir pour lire ce compteur sans se tromper :
   clignote à chaque rechargement de page ou passage du wifi à la 4G.
 - **Il compte des écrans ouverts, pas des personnes.** Un stagiaire qui ouvre
   le lien deux fois compte pour deux.
-- **L'aperçu du formateur n'est pas compté.** Le bouton « Ouvrir l'écran »
+- **L'aperçu du formateur n'est pas compté.** Le bouton « Voir l'explo »
   ajoute `&apercu=1` au lien : l'écran fonctionne normalement mais ne pèse pas
   dans le compte. Le lien distribué à l'équipe, lui, ne porte pas cette marque.
 
