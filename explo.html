@@ -1,0 +1,487 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0d0f12">
+<title>Explosimètre — écran</title>
+<style>
+  :root{
+    --jaune-haut:#ffe250;
+    --jaune-bas:#f0bf00;
+    --lcd:#c3c8b8;
+    --lcd-encre:#111310;
+    --lcd-fantome:rgba(17,19,16,.07);
+    --ambre:#ffb200;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
+  body{
+    margin:0;
+    background:radial-gradient(120% 90% at 50% 0%,#1b1f25 0%,#0b0d10 70%);
+    color:#e7e9ec;
+    font-family:"Segoe UI",system-ui,-apple-system,Roboto,sans-serif;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:14px;padding:16px;overflow:hidden;
+    user-select:none;
+  }
+
+  /* ---------- barre d'état ---------- */
+  .etat{
+    display:flex;align-items:center;gap:10px;
+    font-size:13px;letter-spacing:.02em;color:#9aa2ad;
+  }
+  .voyant{
+    width:12px;height:12px;border-radius:50%;
+    background:#4b525c;box-shadow:0 0 0 3px rgba(255,255,255,.04);
+    transition:background .2s, box-shadow .2s;
+  }
+  .voyant.ok{background:#25d366;box-shadow:0 0 10px 2px rgba(37,211,102,.55)}
+  .voyant.local{background:#ffb200;box-shadow:0 0 10px 2px rgba(255,178,0,.45)}
+  .voyant.ko{background:#ff3b30;box-shadow:0 0 10px 2px rgba(255,59,48,.5)}
+
+  /* ---------- boîtier ---------- */
+  .detecteur{
+    width:min(330px,86vw);
+    background:linear-gradient(180deg,var(--jaune-haut) 0%,#ffd400 42%,var(--jaune-bas) 100%);
+    border-radius:30px 30px 38px 38px/34px 34px 52px 52px;
+    padding:12px 12px 18px;
+    box-shadow:
+      0 24px 50px rgba(0,0,0,.6),
+      inset 0 2px 0 rgba(255,255,255,.6),
+      inset 0 -10px 26px rgba(150,105,0,.35);
+    position:relative;
+  }
+  /* poignées latérales en caoutchouc */
+  .detecteur::before,.detecteur::after{
+    content:"";position:absolute;top:23%;width:12px;height:26%;
+    background:linear-gradient(90deg,#c99a12,#e6bf4a);
+    border-radius:6px;
+  }
+  .detecteur::before{left:-3px}
+  .detecteur::after{right:-3px}
+
+  .bandeau{
+    height:26px;margin:0 6px 10px;
+    background:linear-gradient(180deg,#e8c14e,#c79a1a);
+    border-radius:8px;
+    box-shadow:inset 0 1px 2px rgba(255,255,255,.5);
+    display:flex;align-items:center;justify-content:center;
+    overflow:hidden;position:relative;
+  }
+  .bandeau .lueur{
+    position:absolute;inset:0;background:var(--ambre);opacity:0;
+  }
+
+  .cadre{
+    background:linear-gradient(180deg,#2a2a28,#4a4a45);
+    border-radius:10px;padding:5px;
+    box-shadow:inset 0 2px 4px rgba(0,0,0,.6);
+  }
+  .lcd{
+    background:linear-gradient(160deg,#ccd1c2,#b6bcab);
+    border-radius:4px;
+    padding:14px 12px 8px;
+    display:grid;grid-template-columns:1fr 1fr;gap:2px 6px;
+    position:relative;
+  }
+  .lcd .retro{
+    position:absolute;inset:0;border-radius:4px;
+    background:#9fe86b;opacity:0;pointer-events:none;mix-blend-mode:multiply;
+  }
+
+  .case{display:flex;flex-direction:column;align-items:flex-end;gap:1px}
+  .case.gauche{align-items:flex-start}
+  .valeur{display:flex;align-items:flex-end;height:44px}
+  .chiffre{position:relative;height:100%;margin-left:1px}
+  .chiffre svg{height:100%;display:block}
+  .chiffre.pt::after{
+    content:"";position:absolute;right:-5px;bottom:2px;
+    width:7px;height:7px;background:var(--lcd-encre);
+  }
+  .seg{fill:var(--lcd-fantome)}
+  .seg.on{fill:var(--lcd-encre)}
+
+  .libelle{
+    font:600 12px/1 "Segoe UI",system-ui,sans-serif;
+    color:var(--lcd-encre);letter-spacing:.03em;
+    display:flex;align-items:center;gap:5px;
+  }
+  .libelle sub{font-size:9px}
+  .pile{
+    width:20px;height:8px;border:1.5px solid var(--lcd-encre);
+    border-radius:2px;position:relative;
+  }
+  .pile::before{content:"";position:absolute;right:-3px;top:2px;width:2px;height:3px;background:var(--lcd-encre)}
+  .pile i{position:absolute;left:1px;top:1px;bottom:1px;width:70%;background:var(--lcd-encre)}
+
+  .clignote{animation:clign .5s steps(1,end) infinite}
+  @keyframes clign{50%{opacity:.12}}
+
+  .plaque{
+    margin:6px 8px 0;height:26px;border-radius:5px;
+    background:linear-gradient(180deg,#1c1c1c,#3a3a38);
+    display:flex;align-items:center;gap:8px;padding:0 8px;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.15);
+  }
+  .plaque .bw{
+    background:#e6e6e6;color:#1c1c1c;font:900 11px/1 "Arial Black",sans-serif;
+    padding:3px 5px;border-radius:2px;letter-spacing:-.06em;
+  }
+  .plaque .nom{
+    color:#f1f1ef;font:700 11.5px/1 "Segoe UI",sans-serif;letter-spacing:.02em;
+    white-space:nowrap;
+  }
+  .plaque .nom b{font-size:13.5px}
+
+  .commandes{display:flex;align-items:center;justify-content:space-between;padding:16px 26px 6px}
+  .vis{
+    width:34px;height:26px;border-radius:8px;
+    background:linear-gradient(180deg,#f7d63c,#e0b400);
+    box-shadow:inset 0 1px 2px rgba(255,255,255,.6), inset 0 -2px 3px rgba(140,100,0,.4);
+    display:flex;align-items:center;justify-content:center;
+  }
+  .vis::after{content:"";width:6px;height:6px;border-radius:50%;background:#3a2f00}
+  .bouton{
+    width:56px;height:30px;border:0;border-radius:9px;cursor:pointer;
+    background:linear-gradient(180deg,#7fa8ff,#3f6fd8);
+    box-shadow:0 2px 0 #2a4c99, inset 0 1px 2px rgba(255,255,255,.6);
+    transition:transform .06s;
+  }
+  .bouton:active{transform:translateY(2px);box-shadow:0 0 0 #2a4c99, inset 0 1px 2px rgba(255,255,255,.6)}
+  .bouton:focus-visible{outline:3px solid #fff;outline-offset:3px}
+
+  .capteurs{
+    margin:10px auto 0;width:150px;height:110px;position:relative;
+  }
+  .capteurs .anneau{
+    position:absolute;inset:8px;border:9px solid #5a4a10;border-radius:50%;
+    opacity:.75;
+  }
+  .trou{
+    position:absolute;width:34px;height:34px;border-radius:50%;
+    background:radial-gradient(circle at 40% 35%,#fdfdfa,#d9d9cf 65%,#8d8a7c);
+    box-shadow:inset 0 0 0 5px #5a4a10, 0 1px 2px rgba(0,0,0,.35);
+  }
+  .trou.hg{left:4px;top:0}   .trou.hd{right:4px;top:0}
+  .trou.bg{left:16px;bottom:0} .trou.bd{right:16px;bottom:0}
+
+  .pied{font-size:12px;color:#79818c;text-align:center;max-width:330px;line-height:1.5}
+  .pied kbd{background:#232830;border-radius:4px;padding:1px 5px;color:#c9cfd8;font-size:11px}
+  .sourdine{color:#ffb200}
+
+  /* ---------- voile d'activation du son ---------- */
+  .voile{
+    position:fixed;inset:0;background:rgba(8,10,13,.92);backdrop-filter:blur(6px);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;
+    padding:24px;text-align:center;z-index:10;
+  }
+  .voile h1{font:700 20px/1.3 "Segoe UI",sans-serif;margin:0;color:#fff}
+  .voile p{margin:0;color:#98a0ab;font-size:14px;max-width:300px;line-height:1.5}
+  .voile button{
+    border:0;border-radius:12px;padding:15px 30px;cursor:pointer;
+    background:#ffd400;color:#141414;font:700 16px/1 "Segoe UI",sans-serif;
+    box-shadow:0 6px 20px rgba(255,212,0,.3);
+  }
+  .voile.parti{display:none}
+
+  @media (prefers-reduced-motion:reduce){.clignote{animation:none}}
+</style>
+</head>
+<body data-alarme="0">
+
+  <div class="etat">
+    <span class="voyant" id="voyant"></span>
+    <span id="texteEtat">Connexion…</span>
+  </div>
+
+  <div class="detecteur">
+    <div class="bandeau"><span class="lueur" id="lueur"></span></div>
+
+    <div class="cadre">
+      <div class="lcd">
+        <span class="retro" id="retro"></span>
+
+        <div class="case gauche">
+          <div class="valeur" id="v-h2s"></div>
+          <div class="libelle" id="l-h2s">H<sub>2</sub>S ppm</div>
+        </div>
+
+        <div class="case">
+          <div class="valeur" id="v-co"></div>
+          <div class="libelle" id="l-co">CO ppm</div>
+        </div>
+
+        <div class="case gauche">
+          <div class="valeur" id="v-o2"></div>
+          <div class="libelle" id="l-o2">O<sub>2</sub> % <span class="pile"><i></i></span></div>
+        </div>
+
+        <div class="case">
+          <div class="valeur" id="v-lel"></div>
+          <div class="libelle" id="l-lel">LEL%</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="plaque">
+      <span class="bw">BW</span>
+      <span class="nom"><b>G</b>AS<b>A</b>LERT<b>M</b>ICRO<b>C</b>LIP <b>X3</b></span>
+    </div>
+
+    <div class="commandes">
+      <div class="vis"></div>
+      <button class="bouton" id="bouton" aria-label="Bouton — appui court : rétroéclairage, appui long : sourdine"></button>
+    </div>
+
+    <div class="capteurs">
+      <div class="anneau"></div>
+      <div class="trou hg"></div><div class="trou hd"></div>
+      <div class="trou bg"></div><div class="trou bd"></div>
+    </div>
+  </div>
+
+  <div class="pied" id="pied">Appui court sur le bouton bleu : rétroéclairage. Appui long : sourdine.</div>
+
+  <div class="voile" id="voile">
+    <h1>Explosimètre d'exercice</h1>
+    <p>Touchez pour démarrer. Le son des alarmes ne peut être joué qu'après une action de votre part.</p>
+    <button id="demarrer">Démarrer l'appareil</button>
+  </div>
+
+<script src="config-firebase.js"></script>
+<script src="liaison.js"></script>
+<script src="son-explosimetre.js"></script>
+<script>
+/* =======================================================================
+   1. Afficheur 7 segments
+   ======================================================================= */
+const SEGMENTS = {
+  a:"6,12 14,4 86,4 94,12 86,20 14,20",
+  b:"88,14 96,22 96,82 88,90 80,82 80,22",
+  c:"88,92 96,100 96,160 88,168 80,160 80,100",
+  d:"6,168 14,160 86,160 94,168 86,176 14,176",
+  e:"16,92 24,100 24,160 16,168 8,160 8,100",
+  f:"16,14 24,22 24,82 16,90 8,82 8,22",
+  g:"6,90 14,82 86,82 94,90 86,98 14,98"
+};
+const ALPHABET = {
+  "0":"abcdef","1":"bc","2":"abged","3":"abgcd","4":"fgbc","5":"afgcd",
+  "6":"afgedc","7":"abc","8":"abcdefg","9":"abcdfg",
+  "-":"g","O":"abcdef","L":"def"," ":""
+};
+
+function chiffre(car){
+  const boite = document.createElement("span");
+  boite.className = "chiffre";
+  const actifs = ALPHABET[car] || "";
+  let svg = '<svg viewBox="0 0 104 180" aria-hidden="true">';
+  for (const [nom, pts] of Object.entries(SEGMENTS)){
+    svg += `<polygon class="seg${actifs.includes(nom) ? " on" : ""}" points="${pts}"/>`;
+  }
+  boite.innerHTML = svg + "</svg>";
+  return boite;
+}
+
+/* Écrit un texte type "20.9" dans un conteneur. */
+function ecrire(conteneur, texte){
+  if (conteneur.dataset.affiche === texte) return;
+  conteneur.dataset.affiche = texte;
+  conteneur.innerHTML = "";
+  let dernier = null;
+  for (const car of texte){
+    if (car === "."){ if (dernier) dernier.classList.add("pt"); continue; }
+    dernier = chiffre(car);
+    conteneur.appendChild(dernier);
+  }
+}
+
+/* =======================================================================
+   2. État partagé (valeurs pilotées par la page de contrôle)
+   ======================================================================= */
+const ETAT_DEFAUT = {
+  cibles:{h2s:0, co:0, o2:20.9, lel:0},
+  seuils:{h2s:[10,15], co:[35,200], o2:[19.5,23.5], lel:[10,20]},
+  gamme:{h2s:100, co:500, o2:30, lel:100},   // mesure maximum de chaque capteur
+  reponse:20,        // temps de réponse T90 en secondes
+  bruit:true,        // micro-fluctuations des capteurs
+  raz:0              // incrément = remise à zéro immédiate de l'affichage
+};
+let etat = structuredClone(ETAT_DEFAUT);
+let dernierRaz = 0;
+
+/* Valeurs réellement affichées : elles rejoignent les cibles progressivement. */
+let mesure = {...etat.cibles};
+
+/* =======================================================================
+   3. Liaison avec le pupitre (Firebase, serveur local ou repli)
+   ======================================================================= */
+const voyant = document.getElementById("voyant");
+const texteEtat = document.getElementById("texteEtat");
+
+Liaison.demarrer({
+  defaut: ETAT_DEFAUT,
+  surEtat(nouveau){
+    etat = Object.assign(structuredClone(ETAT_DEFAUT), nouveau);
+    if (etat.raz !== dernierRaz){ dernierRaz = etat.raz; mesure = {...etat.cibles}; }
+  },
+  surVoyant(niveau, texte){
+    voyant.className = "voyant " + niveau;
+    texteEtat.textContent = texte;
+  }
+});
+
+/* =======================================================================
+   4. Simulation des capteurs (inertie + bruit de mesure)
+   ======================================================================= */
+const PAS = 100; // ms
+setInterval(() => {
+  const tau = Math.max(0.5, etat.reponse) / 2.303;   // T90 -> constante de temps
+  const k = 1 - Math.exp(-(PAS/1000) / tau);
+  for (const g of ["h2s","co","o2","lel"]){
+    const cible = Number(etat.cibles[g]);
+    mesure[g] += (cible - mesure[g]) * k;
+    if (Math.abs(cible - mesure[g]) < 0.02) mesure[g] = cible;
+  }
+  rafraichir();
+}, PAS);
+
+function bruit(g, valeur){
+  if (!etat.bruit) return valeur;
+  if (g === "o2") return valeur + (Math.random() - .5) * 0.12;
+  if (valeur <= 0) return 0;
+  const amplitude = g === "co" ? 1.2 : g === "lel" ? 0.6 : 0.5;
+  return Math.max(0, valeur + (Math.random() - .5) * amplitude);
+}
+
+function formater(g, valeur){
+  if (g === "o2") return valeur.toFixed(1);
+  return String(Math.round(valeur));
+}
+
+/* Niveau d'alarme : 0 aucune, 1 basse, 2 haute. */
+function niveauAlarme(g, valeur){
+  const [bas, haut] = etat.seuils[g];
+  if (g === "o2") return (valeur <= bas || valeur >= haut) ? 2 : 0;
+  if (valeur >= haut) return 2;
+  if (valeur >= bas) return 1;
+  return 0;
+}
+
+const cases = {
+  h2s:{v:document.getElementById("v-h2s"), l:document.getElementById("l-h2s")},
+  co :{v:document.getElementById("v-co"),  l:document.getElementById("l-co")},
+  o2 :{v:document.getElementById("v-o2"),  l:document.getElementById("l-o2")},
+  lel:{v:document.getElementById("v-lel"), l:document.getElementById("l-lel")}
+};
+
+function rafraichir(){
+  let global = 0;
+  for (const g of ["h2s","co","o2","lel"]){
+    // Le dépassement de gamme se juge sur la valeur stable, pas sur le bruit :
+    // sinon l'afficheur clignoterait entre OL et un chiffre en limite haute.
+    const horsGamme = mesure[g] > Number(etat.gamme[g]);
+    const brute = bruit(g, mesure[g]);
+
+    ecrire(cases[g].v, horsGamme ? "OL" : formater(g, brute));
+    const n = horsGamme ? 2 : niveauAlarme(g, brute);
+    global = Math.max(global, n);
+    cases[g].v.classList.toggle("clignote", n > 0);
+    cases[g].l.classList.toggle("clignote", n > 0);
+  }
+  majAlarme(global);
+}
+
+/* =======================================================================
+   5. Alarmes : son modélisé (SonExplo), flash ambre, vibration
+   ======================================================================= */
+let sonPret = false, muet = false, niveauCourant = -1, cycle = null;
+const lueur = document.getElementById("lueur");
+const retro = document.getElementById("retro");
+
+/* Rythme visuel calé sur le modèle sonore : le bandeau reste allumé
+   pendant toute la durée du balayage, puis s'éteint sur le silence. */
+const RYTHME = {
+  1: {balayage: SonExplo.ALARMES.basse.dureeBalayage * 1000, periode: SonExplo.ALARMES.basse.periode * 1000},
+  2: {balayage: SonExplo.ALARMES.haute.dureeBalayage * 1000, periode: SonExplo.ALARMES.haute.periode * 1000}
+};
+
+const NIVEAUX = {0:null, 1:"basse", 2:"haute"};
+
+function eteindre(){
+  lueur.style.opacity = "0";
+  retro.style.opacity = retroActif ? ".35" : "0";
+}
+
+function majSon(){
+  if (!sonPret) return;
+  SonExplo.alarme(muet ? null : NIVEAUX[niveauCourant] || null);
+}
+
+function majAlarme(n){
+  if (n === niveauCourant) return;
+  niveauCourant = n;
+  document.body.dataset.alarme = n;
+  clearInterval(cycle); cycle = null;
+  eteindre();
+  majSon();
+  if (n === 0) return;
+
+  const r = RYTHME[n];
+  const salve = () => {
+    lueur.style.opacity = "1";
+    retro.style.opacity = ".45";
+    setTimeout(eteindre, r.balayage);
+    if (navigator.vibrate && !muet) navigator.vibrate(Math.round(r.balayage));
+  };
+  salve();
+  cycle = setInterval(salve, r.periode);
+}
+
+/* =======================================================================
+   6. Bouton bleu : rétroéclairage (appui court) / sourdine (appui long)
+   ======================================================================= */
+const bouton = document.getElementById("bouton");
+const pied = document.getElementById("pied");
+let retroActif = false, minuteurLong = null, longFait = false;
+
+function basculerRetro(){
+  retroActif = !retroActif;
+  retro.style.opacity = retroActif ? ".35" : "0";
+}
+function basculerSourdine(){
+  muet = !muet;
+  majSon();
+  pied.innerHTML = muet
+    ? '<span class="sourdine">Sourdine activée</span> — appui long pour rétablir le son.'
+    : "Appui court sur le bouton bleu : rétroéclairage. Appui long : sourdine.";
+  if (navigator.vibrate) navigator.vibrate(20);
+}
+const debut = () => { longFait = false; minuteurLong = setTimeout(() => { longFait = true; basculerSourdine(); }, 700); };
+const fin = () => { clearTimeout(minuteurLong); if (!longFait) basculerRetro(); };
+bouton.addEventListener("pointerdown", debut);
+bouton.addEventListener("pointerup", fin);
+bouton.addEventListener("pointerleave", () => clearTimeout(minuteurLong));
+
+/* =======================================================================
+   7. Mise sous tension (débloque l'audio + séquence d'allumage)
+   ======================================================================= */
+document.getElementById("demarrer").addEventListener("click", async () => {
+  document.getElementById("voile").classList.add("parti");
+  mesure = {...etat.cibles};
+  rafraichir();
+  try{
+    SonExplo.debloquer();
+    SonExplo.setVolume(0.6);      // niveau confortable en salle ; 0 → 1
+    await SonExplo.allumage();    // 3 bips puis tenue longue, 1,2 s
+  }catch(e){}
+  sonPret = true;
+  niveauCourant = -1;
+  rafraichir();
+  try{ await navigator.wakeLock.request("screen"); }catch(e){}
+});
+
+rafraichir();
+</script>
+</body>
+</html>
