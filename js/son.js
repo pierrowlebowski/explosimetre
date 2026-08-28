@@ -1,5 +1,5 @@
 /* ===========================================================================
- * son-explosimetre.js — sons du BW GasAlert MicroClip X3
+ * son.js — sons de l'explosimètre 4 gaz
  *
  * Modèle relevé sur enregistrement réel :
  *

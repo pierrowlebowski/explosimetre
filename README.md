@@ -1,4 +1,4 @@
-# Explosimètre d'exercice — BW GasAlert MicroClip X3
+# Explosimètre d'exercice
 
 Simulateur à deux postes pour les exercices : un formateur règle les gaz depuis
 son téléphone, l'équipe voit et entend l'appareil réagir sur un autre écran.
