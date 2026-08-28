@@ -1,15 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Serveur de l'explosimètre d'exercice.
-Bibliothèque standard uniquement : aucune installation, aucun accès Internet.
+Serveur de secours de l'explosimètre d'exercice.
+Bibliothèque standard uniquement : aucune installation, aucun accès internet.
+
+Il ne connaît ni les gaz ni les seuils : il ne fait que relayer, en direct, ce
+que le pupitre lui envoie. Tous les réglages vivent dans js/config.js.
 
 Lancement :   python serveur.py
               python serveur.py 8080        (pour changer de port)
-
-Puis, sur les téléphones du réseau :
-    pupitre de contrôle  ->  http://<adresse-affichée>:8000/controle.html
-    écran du détecteur   ->  http://<adresse-affichée>:8000/explo.html
 """
 
 import json
@@ -24,30 +23,21 @@ RACINE = os.path.dirname(os.path.abspath(__file__))
 FICHIER_ETAT = os.path.join(RACINE, "etat.json")
 PORT = int(sys.argv[1]) if len(sys.argv) > 1 else 8000
 
-ETAT_DEFAUT = {
-    "cibles": {"h2s": 0, "co": 0, "o2": 20.9, "lel": 0},
-    "seuils": {"h2s": [10, 15], "co": [35, 200], "o2": [19.5, 23.5], "lel": [10, 20]},
-    "gamme": {"h2s": 100, "co": 500, "o2": 30, "lel": 100},
-    "reponse": 20,
-    "bruit": True,
-    "raz": 0,
-}
-
 verrou = threading.Lock()
 abonnes = []          # une file d'attente par page connectée
-etat = json.loads(json.dumps(ETAT_DEFAUT))
+etat = {}             # rempli par le pupitre au premier réglage
 
 # Reprise de l'état du dernier exercice, s'il existe.
 if os.path.exists(FICHIER_ETAT):
     try:
         with open(FICHIER_ETAT, encoding="utf-8") as f:
-            etat.update(json.load(f))
+            etat = json.load(f)
     except Exception:
-        pass
+        etat = {}
 
 
 def fusionner(base, ajout):
-    """Fusion récursive : la page de contrôle peut n'envoyer qu'une partie de l'état."""
+    """Fusion récursive : le pupitre peut n'envoyer qu'une partie de l'état."""
     for cle, valeur in ajout.items():
         if isinstance(valeur, dict) and isinstance(base.get(cle), dict):
             fusionner(base[cle], valeur)
@@ -74,9 +64,17 @@ def enregistrer():
 
 
 PAGES = {"/": "index.html", "/controle": "controle.html", "/explo": "explo.html"}
-TYPES = {".html": "text/html; charset=utf-8", ".css": "text/css; charset=utf-8",
-         ".js": "text/javascript; charset=utf-8", ".json": "application/json; charset=utf-8",
-         ".png": "image/png", ".svg": "image/svg+xml", ".ico": "image/x-icon"}
+TYPES = {
+    ".html": "text/html; charset=utf-8",
+    ".css": "text/css; charset=utf-8",
+    ".js": "text/javascript; charset=utf-8",
+    ".json": "application/json; charset=utf-8",
+    ".md": "text/markdown; charset=utf-8",
+    ".png": "image/png",
+    ".svg": "image/svg+xml",
+    ".ico": "image/x-icon",
+}
+DOSSIERS_AUTORISES = {"", "css", "js"}
 
 
 class Gestionnaire(BaseHTTPRequestHandler):
@@ -95,15 +93,23 @@ class Gestionnaire(BaseHTTPRequestHandler):
         if corps:
             self.wfile.write(corps)
 
-    def fichier(self, nom):
-        chemin = os.path.join(RACINE, os.path.basename(nom))
-        if not os.path.isfile(chemin):
-            self.repondre(404, b"Page introuvable")
-            return
+    def fichier(self, chemin_demande):
+        """Sert un fichier de la racine, de css/ ou de js/ — et rien d'autre."""
+        morceaux = [m for m in chemin_demande.strip("/").split("/") if m not in ("", ".", "..")]
+        if not morceaux or len(morceaux) > 2:
+            return self.repondre(404, b"Page introuvable")
+        dossier = morceaux[0] if len(morceaux) == 2 else ""
+        if dossier not in DOSSIERS_AUTORISES:
+            return self.repondre(404, b"Page introuvable")
+
+        chemin = os.path.join(RACINE, *morceaux)
+        ext = os.path.splitext(chemin)[1].lower()
+        if ext not in TYPES or not os.path.isfile(chemin):
+            return self.repondre(404, b"Page introuvable")
+
         with open(chemin, "rb") as f:
             contenu = f.read()
-        ext = os.path.splitext(chemin)[1].lower()
-        self.repondre(200, contenu, TYPES.get(ext, "application/octet-stream"))
+        self.repondre(200, contenu, TYPES[ext])
 
     # ---------- routes ----------
     def do_GET(self):
@@ -112,29 +118,24 @@ class Gestionnaire(BaseHTTPRequestHandler):
         if chemin == "/api/etat":
             with verrou:
                 corps = json.dumps(etat, ensure_ascii=False).encode("utf-8")
-            self.repondre(200, corps, "application/json; charset=utf-8")
-            return
+            return self.repondre(200, corps, "application/json; charset=utf-8")
 
         if chemin == "/api/flux":
-            self.flux_sse()
-            return
+            return self.flux_sse()
 
         if chemin in PAGES:
-            self.fichier(PAGES[chemin])
-            return
+            return self.fichier(PAGES[chemin])
 
-        self.fichier(chemin.lstrip("/"))
+        self.fichier(chemin)
 
     def do_POST(self):
         if self.path.split("?")[0] != "/api/etat":
-            self.repondre(404, b"Route inconnue")
-            return
+            return self.repondre(404, b"Route inconnue")
         taille = int(self.headers.get("Content-Length", 0))
         try:
             recu = json.loads(self.rfile.read(taille).decode("utf-8"))
         except Exception:
-            self.repondre(400, b"JSON invalide")
-            return
+            return self.repondre(400, b"JSON invalide")
         with verrou:
             fusionner(etat, recu)
             diffuser()
@@ -159,8 +160,7 @@ class Gestionnaire(BaseHTTPRequestHandler):
             self.wfile.flush()
             while True:
                 try:
-                    charge = file.get(timeout=2)
-                    message = f"data: {charge}\n\n"
+                    message = "data: " + file.get(timeout=2) + "\n\n"
                 except queue.Empty:
                     message = ": battement\n\n"   # maintient le voyant vert
                 self.wfile.write(message.encode("utf-8"))

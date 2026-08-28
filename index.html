@@ -3,31 +3,41 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0d0f12">
 <title>Explosimètre d'exercice</title>
+<link rel="stylesheet" href="css/commun.css">
 <style>
   body{
-    margin:0;min-height:100vh;background:#0d0f12;color:#e7e9ec;
-    font-family:"Segoe UI",system-ui,sans-serif;
-    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:24px;
+    min-height:100vh; padding:24px;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px;
   }
-  h1{font-size:20px;margin:0 0 4px;text-align:center}
-  p.sous{margin:0 0 12px;color:#8b939e;font-size:13px;text-align:center}
-  a{
-    display:block;width:min(320px,90vw);text-decoration:none;color:inherit;
-    background:#161a20;border:1px solid #242a33;border-radius:14px;padding:18px 20px;
+  h1{ font-size:20px; margin:0 0 4px; text-align:center }
+  .sous{ margin:0 0 12px; text-align:center }
+  .acces{
+    display:block; width:min(320px,90vw); text-decoration:none; color:inherit;
+    background:var(--carte); border:1px solid var(--bord);
+    border-radius:14px; padding:18px 20px;
   }
-  a:hover{border-color:#39414d}
-  a b{display:block;font-size:16px;margin-bottom:4px}
-  a span{color:#8b939e;font-size:13px;line-height:1.45;display:block}
-  a.jaune b{color:#ffd400}
+  .acces:hover{ border-color:#39414d }
+  .acces b{ display:block; font-size:16px; margin-bottom:4px }
+  .acces span{ display:block; color:var(--doux); font-size:13px; line-height:1.45 }
+  .acces.jaune b{ color:var(--jaune) }
 </style>
 </head>
 <body>
   <div>
     <h1>Explosimètre d'exercice</h1>
-    <p class="sous">Simulateur BW GasAlert MicroClip X3</p>
+    <p class="aide sous">Simulateur BW GasAlert MicroClip X3</p>
   </div>
-  <a class="jaune" href="controle.html"><b>Pupitre de contrôle</b><span>Pour le formateur : régler les gaz, les seuils et les scénarios.</span></a>
-  <a href="explo.html"><b>Écran du détecteur</b><span>Pour l'équipe : affichage, alarmes sonores et lumineuses.</span></a>
+
+  <a class="acces jaune" href="controle.html">
+    <b>Pupitre de contrôle</b>
+    <span>Pour le formateur : régler les gaz, les seuils et les scénarios.</span>
+  </a>
+
+  <a class="acces" href="explo.html">
+    <b>Écran du détecteur</b>
+    <span>Pour l'équipe : affichage, alarmes sonores et lumineuses.</span>
+  </a>
 </body>
 </html>

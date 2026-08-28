@@ -3,30 +3,64 @@
 Simulateur à deux postes pour les exercices : un formateur règle les gaz depuis
 son téléphone, l'équipe voit et entend l'appareil réagir sur un autre écran.
 
-## Contenu
+## Où modifier quoi
 
-| Fichier | Rôle |
+**`js/config.js` est le seul fichier à ouvrir pour les réglages courants.** Les
+gaz, les seuils, les gammes de mesure, les scénarios et la synchronisation y
+sont réunis. Les deux pages le lisent : il n'y a rien à recopier ailleurs.
+
+```
+explosimetre/
+├── index.html            page d'accueil
+├── controle.html         pupitre du formateur — structure seule
+├── explo.html            écran du détecteur — structure seule
+├── css/
+│   ├── commun.css        palette, voyant de liaison
+│   ├── controle.css      curseurs, scénarios, grille des seuils
+│   └── explo.css         boîtier jaune et afficheur
+├── js/
+│   ├── config.js         ← les réglages
+│   ├── mesure.js         règles d'alarme et de gamme, communes aux deux pages
+│   ├── liaison.js        synchronisation
+│   ├── afficheur.js      chiffres 7 segments
+│   ├── son.js            les trois sons de l'appareil
+│   ├── veille.js         empêche le téléphone d'éteindre son écran
+│   ├── controle.js       logique du pupitre
+│   └── explo.js          logique de l'écran
+├── serveur.py            serveur de secours pour réseau local sans internet
+└── README.md
+```
+
+Quelques repères :
+
+| Ce que vous voulez changer | Fichier |
 |---|---|
-| `controle.html` | Pupitre du formateur : valeurs, scénarios, seuils, temps de réponse. |
-| `explo.html` | Écran du détecteur : afficheur 7 segments, alarmes sonores et lumineuses. |
-| `liaison.js` | Synchronisation entre les deux pages. |
-| `config-firebase.js` | Clés du projet Firebase et choix du mode de liaison. |
-| `son-explosimetre.js` | Sons du MicroClip relevés sur enregistrement réel, resynthétisés. |
-| `index.html` | Page d'accueil avec les deux accès. |
-| `serveur.py` | Serveur de secours, pour un réseau local sans internet. |
+| Un seuil, une gamme, un scénario | `js/config.js` |
+| Ajouter ou retirer un gaz | `js/config.js`, puis les cases de `explo.html` |
+| Ce qui déclenche une alarme | `js/mesure.js` |
+| L'aspect du détecteur | `css/explo.css` |
+| L'aspect du pupitre | `css/controle.css` |
+| Les sons | `js/son.js` |
+
+`serveur.py` ne connaît ni les gaz ni les seuils : il ne fait que relayer ce que
+le pupitre lui envoie. Il n'y a donc jamais à le modifier en même temps que les
+réglages.
 
 ## Mise en ligne sur GitHub Pages
 
 1. Créer un dépôt GitHub, par exemple `explosimetre`, en **public**.
-2. Y déposer tous les fichiers, à la racine.
-3. Onglet *Settings* → *Pages* → *Source* : `Deploy from a branch`,
-   branche `main`, dossier `/ (root)`. Enregistrer.
+2. Y déposer tous les fichiers **en conservant les dossiers `css/` et `js/`**.
+3. *Settings* → *Pages* → *Source* : `Deploy from a branch`, branche `main`,
+   dossier `/ (root)`. Enregistrer.
 4. Au bout d'une minute, le site est en ligne :
 
    - Pupitre : `https://VOTRE-PSEUDO.github.io/explosimetre/controle.html`
    - Écran : `https://VOTRE-PSEUDO.github.io/explosimetre/explo.html`
 
 `serveur.py` peut rester dans le dépôt : GitHub Pages l'ignore.
+
+Le découpage en fichiers rend l'ouverture par double-clic (`file://`) moins
+fiable selon le navigateur. Passez par GitHub Pages ou par `serveur.py`.
 
 ## Déroulement d'un exercice
 
@@ -41,10 +75,32 @@ son téléphone, l'équipe voit et entend l'appareil réagir sur un autre écran
 Le code d'exercice isole les manœuvres : deux groupes peuvent tourner en
 parallèle sans se perturber, chacun sur son propre code.
 
+### L'écran du téléphone ne doit pas s'éteindre
+
+Un téléphone en veille ne sonne plus : l'exercice s'arrête. À la mise sous
+tension, la page demande donc au navigateur de garder l'écran allumé
+(*Screen Wake Lock*). Ce verrou n'est pas définitif — le navigateur le relâche
+dès que la page passe en arrière-plan, ne serait-ce qu'un instant — aussi
+`js/veille.js` le redemande à chaque retour de la page, et `js/son.js` relance
+l'horloge audio, que le téléphone a pu suspendre entre-temps.
+
+Deux conditions échappent à la page, qui l'écrit alors en orange sous
+l'appareil :
+
+- **HTTPS obligatoire.** Le verrou n'existe qu'en origine sûre. GitHub Pages
+  convient ; `serveur.py`, en `http://` sur le réseau local, non.
+- **Navigateur trop ancien.** Android Chrome sait le faire depuis 2020,
+  iOS Safari depuis la version 16.4.
+
+Dans ces deux cas — et de toute façon par précaution — réglez la mise en
+veille du téléphone sur **Jamais** avant l'exercice. Aucun code ne peut
+empêcher un écran verrouillé à la main de s'éteindre, ni le passage dans une
+autre application.
+
 ## Modes de liaison
 
-`liaison.js` essaie trois transports dans l'ordre, et s'arrête au premier qui
-répond :
+`js/liaison.js` essaie trois transports dans l'ordre, et s'arrête au premier
+qui répond :
 
 | Mode | Voyant | Portée | Condition |
 |---|---|---|---|
@@ -55,8 +111,8 @@ répond :
 Voyant rouge : la liaison était établie et s'est interrompue, la reconnexion
 est automatique.
 
-Le mode peut être forcé dans `config-firebase.js` (`LIAISON_PREFEREE`) ou dans
-l'adresse : `explo.html?salle=cis-nord&liaison=serveur`.
+Le mode se force dans `js/config.js` (`LIAISON_PREFEREE`) ou dans l'adresse :
+`explo.html?salle=cis-nord&liaison=serveur`.
 
 ### Sans internet
 
@@ -66,7 +122,7 @@ bascule prend quelques secondes. Dans ce cas, mieux vaut le serveur local :
 1. Copier le dossier sur un portable, se mettre en partage de connexion Wi-Fi.
 2. Dans le dossier : `python serveur.py` (ou `python serveur.py 8080` si le
    port 8000 est pris). Le serveur affiche les adresses à saisir.
-3. Mettre `LIAISON_PREFEREE = "serveur"` dans `config-firebase.js` pour éviter
+3. Mettre `LIAISON_PREFEREE = "serveur"` dans `js/config.js` pour éviter
    l'attente de Firebase.
 
 Le pare-feu Windows demandera d'autoriser Python au premier lancement :
@@ -74,10 +130,9 @@ accepter pour les réseaux privés.
 
 ## À propos des clés Firebase
 
-Les clés de `config-firebase.js` sont publiques par conception : elles
-identifient le projet, elles ne l'ouvrent pas. Ce sont les règles de la base
-qui protègent les données. Celles en place n'autorisent que la branche des
-exercices :
+Les clés de `js/config.js` sont publiques par conception : elles identifient le
+projet, elles ne l'ouvrent pas. Ce sont les règles de la base qui protègent les
+données. Celles en place n'autorisent que la branche des exercices :
 
 ```json
 {
@@ -101,9 +156,10 @@ sans conséquence ; utilisez simplement des codes peu devinables si vous tenez
 
 - **Inertie des capteurs.** Les valeurs ne sautent pas : elles rejoignent la
   consigne selon un temps de réponse réglable (T90 de 3 à 45 s). « Réaliste »
-  (20 s) correspond à l'ordre de grandeur d'un capteur électrochimique.
-- **Fluctuations.** Les derniers chiffres bougent légèrement, comme sur un
-  appareil réel. Désactivable.
+  (20 s) correspond à l'ordre de grandeur d'un capteur électrochimique. Dès que
+  l'écart restant n'est plus visible à l'écran, l'affichage se cale exactement
+  sur la consigne : 20 ppm demandés, 20 ppm affichés, sans fluctuation.
+
 - **Alarmes.** Les trois sons sont ceux de l'appareil réel, relevés sur
   enregistrement puis resynthétisés — aucun fichier audio à charger.
 
@@ -119,25 +175,28 @@ sans conséquence ; utilisez simplement des codes peu devinables si vous tenez
   téléphone rame. Le bandeau ambre et le rétroéclairage suivent exactement la
   durée du balayage, et le téléphone vibre en même temps.
 
-- **Volume.** Réglé à 60 % dans `explo.html` (`SonExplo.setVolume(0.6)`).
+- **Dépassement de gamme.** Au-delà de la mesure maximum, le détecteur cesse
+  d'afficher une concentration et indique **OL** (*over limit*), en alarme
+  haute. La barre de réglage du pupitre monte un cran au-dessus de la gamme,
+  juste pour permettre de provoquer ce dépassement.
+
 - **Oxygène.** Toute sortie de plage (manque ou excès) déclenche l'alarme
   rapide, l'O₂ étant traité en priorité sur ces appareils.
-- **Dépassement de gamme.** Chaque capteur a une mesure maximum, réglable
-  depuis le pupitre (colonne *Mesure maximum*) :
 
-  | Gaz | Mesure maximum |
-  |---|---|
-  | H₂S | 100 ppm |
-  | CO | 500 ppm |
-  | O₂ | 30 % |
-  | LIE | 100 % |
+- **Bandeau d'alarme.** En alarme, l'écran affiche **LOW ALARM** ou
+  **HIGH ALARM** en haut à gauche, en vidéo inversée comme sur l'appareil
+  réel, et clignote avec les chiffres concernés.
 
-  Au-delà, le détecteur cesse d'afficher une concentration et indique **OL**
-  (*over limit*), en alarme haute. La barre de réglage du pupitre monte un cran
-  au-dessus de la gamme, juste pour permettre de provoquer ce dépassement. Le
-  passage en OL est jugé sur la valeur stable et non sur les fluctuations, pour
-  éviter que l'afficheur ne clignote entre OL et un chiffre en limite.
-- **Bouton bleu.** Appui court : rétroéclairage. Appui long : sourdine.
+- **Valeurs crêtes.** Double appui sur le bouton bleu : l'écran passe en
+  **PEAK** et montre les extrêmes relevés sur les deux dernières minutes —
+  le maximum pour H₂S, CO et LIE, le minimum pour l'oxygène. Tout nouvel
+  appui revient à la mesure. Les alarmes continuent de sonner pendant la
+  consultation. Durée réglable par `DUREE_PICS` dans `js/config.js`.
+
+- **Bouton bleu.** Appui court : rétroéclairage. Double appui : valeurs
+  crêtes. Appui long : sourdine.
+
+- **Volume.** `VOLUME_ALARMES` dans `js/config.js`, de 0 à 1.
 
 ## Réglages par défaut
 

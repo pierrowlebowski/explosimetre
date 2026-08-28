@@ -5,119 +5,20 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0d0f12">
 <title>Explosimètre — pupitre de contrôle</title>
-<style>
-  :root{
-    --fond:#0d0f12; --carte:#161a20; --bord:#242a33;
-    --texte:#e7e9ec; --doux:#8b939e;
-    --jaune:#ffd400; --vert:#25d366; --orange:#ffb200; --rouge:#ff3b30;
-  }
-  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-  body{
-    margin:0;background:var(--fond);color:var(--texte);
-    font-family:"Segoe UI",system-ui,-apple-system,Roboto,sans-serif;
-    padding:14px 14px 40px;max-width:640px;margin-inline:auto;
-  }
-  header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
-  h1{font-size:17px;margin:0;letter-spacing:.01em}
-  h1 span{display:block;font-size:12px;color:var(--doux);font-weight:400;margin-top:2px}
-  .etat{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--doux);white-space:nowrap}
-  .voyant{width:11px;height:11px;border-radius:50%;background:#4b525c;transition:.2s}
-  .voyant.ok{background:var(--vert);box-shadow:0 0 9px 2px rgba(37,211,102,.5)}
-  .voyant.local{background:var(--orange);box-shadow:0 0 9px 2px rgba(255,178,0,.4)}
-  .voyant.ko{background:var(--rouge);box-shadow:0 0 9px 2px rgba(255,59,48,.45)}
-
-  .carte{background:var(--carte);border:1px solid var(--bord);border-radius:14px;padding:14px;margin-bottom:12px}
-  .carte > h2{
-    font-size:11px;text-transform:uppercase;letter-spacing:.11em;color:var(--doux);
-    margin:0 0 12px;font-weight:600;
-  }
-
-  /* ---- curseurs de gaz ---- */
-  .gaz + .gaz{margin-top:16px;padding-top:16px;border-top:1px solid var(--bord)}
-  .ligne{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:8px;gap:10px}
-  .nom{font-size:14px;font-weight:600}
-  .nom sub{font-size:10px}
-  .nom em{font-style:normal;color:var(--doux);font-weight:400;font-size:12px;margin-left:6px}
-  .lecture{
-    font:700 20px/1 ui-monospace,"Consolas",monospace;
-    font-variant-numeric:tabular-nums;min-width:88px;text-align:right;
-  }
-  .lecture small{font-size:11px;color:var(--doux);font-weight:500;margin-left:3px}
-  .lecture.a1{color:var(--orange)} .lecture.a2{color:var(--rouge)}
-
-  input[type=range]{
-    width:100%;-webkit-appearance:none;appearance:none;height:30px;background:transparent;margin:0;
-  }
-  input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:3px;background:#2b323c}
-  input[type=range]::-webkit-slider-thumb{
-    -webkit-appearance:none;width:26px;height:26px;border-radius:50%;margin-top:-10px;
-    background:var(--jaune);border:3px solid #12151a;box-shadow:0 2px 6px rgba(0,0,0,.5);cursor:pointer;
-  }
-  input[type=range]::-moz-range-track{height:6px;border-radius:3px;background:#2b323c}
-  input[type=range]::-moz-range-thumb{
-    width:22px;height:22px;border-radius:50%;background:var(--jaune);border:3px solid #12151a;cursor:pointer;
-  }
-  input[type=range]:focus-visible{outline:2px solid var(--jaune);outline-offset:4px;border-radius:6px}
-  .bornes{display:flex;justify-content:space-between;font-size:11px;color:#5f6771;margin-top:-4px}
-
-  /* ---- scénarios ---- */
-  .scenarios{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
-  .scenarios button{
-    background:#1d222a;border:1px solid var(--bord);color:var(--texte);
-    border-radius:10px;padding:11px 12px;text-align:left;cursor:pointer;font-size:13px;line-height:1.35;
-  }
-  .scenarios button:hover{border-color:#39414d;background:#222834}
-  .scenarios button:active{transform:translateY(1px)}
-  .scenarios button b{display:block;font-size:13px;margin-bottom:2px}
-  .scenarios button i{font-style:normal;color:var(--doux);font-size:11px}
-
-  /* ---- réglages ---- */
-  .reglage{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 0}
-  .reglage + .reglage{border-top:1px solid var(--bord)}
-  .reglage label{font-size:13px}
-  .reglage label small{display:block;color:var(--doux);font-size:11px;margin-top:2px}
-  select, input[type=number]{
-    background:#1d222a;border:1px solid var(--bord);color:var(--texte);
-    border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit;
-  }
-  input[type=number]{width:76px;text-align:right;font-variant-numeric:tabular-nums}
-  .interrupteur{position:relative;width:48px;height:28px;flex:0 0 auto}
-  .interrupteur input{opacity:0;width:100%;height:100%;margin:0;cursor:pointer}
-  .interrupteur span{
-    position:absolute;inset:0;border-radius:14px;background:#2b323c;pointer-events:none;transition:.18s;
-  }
-  .interrupteur span::after{
-    content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;
-    background:#8b939e;transition:.18s;
-  }
-  .interrupteur input:checked + span{background:rgba(37,211,102,.28)}
-  .interrupteur input:checked + span::after{transform:translateX(20px);background:var(--vert)}
-
-  .seuils{display:grid;grid-template-columns:1fr auto auto auto;gap:8px 8px;align-items:center}
-  .seuils .titre{font-size:10.5px;color:var(--doux);text-transform:uppercase;letter-spacing:.06em;text-align:center;line-height:1.2}
-  .seuils .titre:first-child{text-align:left}
-  .seuils .g{font-size:13px}
-  .seuils input{width:64px;padding:8px 6px}
-
-  .actions{display:flex;gap:8px;flex-wrap:wrap}
-  .actions button{
-    flex:1 1 auto;border:0;border-radius:10px;padding:13px;cursor:pointer;
-    font:600 14px/1 inherit;
-  }
-  .principal{background:var(--jaune);color:#141414}
-  .secondaire{background:#1d222a;color:var(--texte);border:1px solid var(--bord)!important}
-
-  .aide{font-size:12px;color:var(--doux);line-height:1.55;margin:0}
-  .aide a{color:var(--jaune)}
-</style>
+<link rel="stylesheet" href="css/commun.css">
+<link rel="stylesheet" href="css/controle.css">
 </head>
 <body>
 
 <header>
   <h1>Pupitre de contrôle<span>Explosimètre d'exercice — MicroClip X3</span></h1>
-  <div class="etat"><span class="voyant" id="voyant"></span><span id="texteEtat">Connexion…</span></div>
+  <div class="etat">
+    <span class="voyant" id="voyant"></span>
+    <span id="texteEtat">Connexion…</span>
+  </div>
 </header>
 
+<!-- Les curseurs sont fabriqués par controle.js à partir de la liste GAZ -->
 <div class="carte" id="carteGaz"><h2>Valeurs mesurées</h2></div>
 
 <div class="carte">
@@ -132,23 +33,30 @@
     <select id="reponse">
       <option value="3">Immédiat (3 s)</option>
       <option value="12">Rapide (12 s)</option>
-      <option value="20" selected>Réaliste (20 s)</option>
+      <option value="20">Réaliste (20 s)</option>
       <option value="45">Lent (45 s)</option>
     </select>
-  </div>
-  <div class="reglage">
-    <label for="bruit">Fluctuations de mesure<small>Fait vibrer les derniers chiffres</small></label>
-    <span class="interrupteur"><input type="checkbox" id="bruit" checked><span></span></span>
   </div>
 </div>
 
 <div class="carte">
   <h2>Seuils d'alarme et gamme de mesure</h2>
   <div class="seuils" id="seuils">
-    <span class="titre">Gaz</span><span class="titre">Basse</span><span class="titre">Haute</span><span class="titre">Mesure maximum</span>
+    <span class="titre">Gaz</span>
+    <span class="titre">Basse</span>
+    <span class="titre">Haute</span>
+    <span class="titre">Mesure maximum</span>
   </div>
-  <p class="aide" style="margin-top:12px">La <b>mesure maximum</b> est la fin de gamme du capteur. Au-delà, le détecteur n'affiche plus de concentration mais <b>OL</b> (<i>over limit</i>) et part en alarme haute. La barre de réglage monte un cran plus haut que cette valeur, juste pour pouvoir provoquer le dépassement.</p>
-  <p class="aide" style="margin-top:8px">Pour l'oxygène, la case « basse » est le seuil de manque d'O₂ et la case « haute » celui d'excès. Toute sortie de plage déclenche l'alarme rapide.</p>
+  <p class="aide" style="margin-top:12px">
+    La <b>mesure maximum</b> est la fin de gamme du capteur. Au-delà, le détecteur
+    n'affiche plus de concentration mais <b>OL</b> (<i>over limit</i>) et part en
+    alarme haute. La barre de réglage monte un cran plus haut que cette valeur,
+    juste pour pouvoir provoquer le dépassement.
+  </p>
+  <p class="aide" style="margin-top:8px">
+    Pour l'oxygène, la case « basse » est le seuil de manque d'O₂ et la case
+    « haute » celui d'excès. Toute sortie de plage déclenche l'alarme rapide.
+  </p>
 </div>
 
 <div class="carte">
@@ -157,233 +65,28 @@
     <button class="principal" id="airNeuf">Remettre à l'air libre</button>
     <button class="secondaire" id="raz">Forcer l'affichage</button>
   </div>
-  <p class="aide" style="margin-top:12px">« Forcer l'affichage » applique les valeurs instantanément sur l'écran, sans temps de réponse — utile pour reprendre un exercice.</p>
+  <p class="aide" style="margin-top:12px">
+    « Forcer l'affichage » applique les valeurs instantanément sur l'écran, sans
+    temps de réponse — utile pour reprendre un exercice.
+  </p>
 </div>
 
 <div class="carte">
   <h2>Lien pour l'équipe</h2>
   <div class="reglage">
     <label for="salle">Code d'exercice<small>Deux exercices peuvent tourner en parallèle avec des codes différents</small></label>
-    <input type="text" id="salle" style="width:110px;text-align:left" maxlength="20">
+    <input type="text" id="salle" maxlength="20">
   </div>
   <div class="actions" style="margin-top:12px">
     <button class="secondaire" id="copier">Copier le lien de l'écran</button>
     <button class="secondaire" id="ouvrir">Ouvrir l'écran</button>
   </div>
-  <p class="aide" style="margin-top:12px;word-break:break-all" id="lienEcran"></p>
+  <p class="aide" style="margin-top:12px" id="lienEcran"></p>
 </div>
 
-<script src="config-firebase.js"></script>
-<script src="liaison.js"></script>
-<script>
-/* =======================================================================
-   Définition des gaz
-   ======================================================================= */
-const GAZ = [
-  {id:"h2s", nom:"H<sub>2</sub>S", unite:"ppm", pas:1,   dec:0, plein:"Sulfure d'hydrogène"},
-  {id:"co",  nom:"CO",             unite:"ppm", pas:1,   dec:0, plein:"Monoxyde de carbone"},
-  {id:"o2",  nom:"O<sub>2</sub>",  unite:"%",   pas:0.1, dec:1, plein:"Oxygène"},
-  {id:"lel", nom:"LIE",            unite:"%",   pas:1,   dec:0, plein:"Limite inférieure d'explosivité"}
-];
-
-/* La barre de réglage monte un cran au-dessus de la gamme du capteur : c'est
-   cette marge qui permet de déclencher l'affichage OL sur le détecteur. */
-const MARGE_OL = 1;
-const borneCurseur = id => Number(etat.gamme[id]) + MARGE_OL;
-
-const ETAT_DEFAUT = {
-  cibles:{h2s:0, co:0, o2:20.9, lel:0},
-  seuils:{h2s:[10,15], co:[35,200], o2:[19.5,23.5], lel:[10,20]},
-  gamme:{h2s:100, co:500, o2:30, lel:100},   // mesure maximum de chaque capteur
-  reponse:20,
-  bruit:true,
-  raz:0
-};
-let etat = structuredClone(ETAT_DEFAUT);
-
-/* =======================================================================
-   Liaison avec l'écran (Firebase, serveur local ou repli)
-   ======================================================================= */
-const voyant = document.getElementById("voyant");
-const texteEtat = document.getElementById("texteEtat");
-let premierRecu = false;
-
-function envoyer(){ Liaison.envoyer(etat); }
-
-Liaison.demarrer({
-  defaut: ETAT_DEFAUT,
-  surEtat(recu){
-    // On ne se laisse écraser qu'au premier chargement : sinon les curseurs
-    // sauteraient sous les doigts pendant qu'on les manipule.
-    if (premierRecu) return;
-    premierRecu = true;
-    etat = Object.assign(structuredClone(ETAT_DEFAUT), recu);
-    construire();
-  },
-  surVoyant(niveau, texte){
-    voyant.className = "voyant " + niveau;
-    texteEtat.textContent = texte;
-  }
-});
-
-/* =======================================================================
-   Construction de l'interface
-   ======================================================================= */
-const carteGaz = document.getElementById("carteGaz");
-
-function niveau(id, v){
-  const [bas, haut] = etat.seuils[id];
-  if (v > Number(etat.gamme[id])) return 2;   // hors gamme : alarme haute
-  if (id === "o2") return (v <= bas || v >= haut) ? 2 : 0;
-  if (v >= haut) return 2;
-  if (v >= bas) return 1;
-  return 0;
-}
-
-function construire(){
-  carteGaz.querySelectorAll(".gaz").forEach(n => n.remove());
-  for (const g of GAZ){
-    const bloc = document.createElement("div");
-    bloc.className = "gaz";
-    bloc.innerHTML = `
-      <div class="ligne">
-        <span class="nom">${g.nom}<em>${g.plein}</em></span>
-        <span class="lecture" id="lec-${g.id}"></span>
-      </div>
-      <input type="range" id="rng-${g.id}" min="0" step="${g.pas}">
-      <div class="bornes"><span>0</span><span id="borne-${g.id}"></span></div>`;
-    carteGaz.appendChild(bloc);
-    const rng = bloc.querySelector("input");
-    rng.max = borneCurseur(g.id);
-    rng.value = etat.cibles[g.id];
-    rng.addEventListener("input", () => {
-      etat.cibles[g.id] = Number(rng.value);
-      majLecture(g);
-      envoyer();
-    });
-    majLecture(g);
-  }
-  majSeuils();
-  document.getElementById("reponse").value = String(etat.reponse);
-  document.getElementById("bruit").checked = !!etat.bruit;
-}
-
-function majLecture(g){
-  const v = Number(etat.cibles[g.id]);
-  const el = document.getElementById("lec-" + g.id);
-  if (!el) return;
-  const horsGamme = v > Number(etat.gamme[g.id]);
-  el.className = "lecture a" + niveau(g.id, v);
-  el.innerHTML = horsGamme
-    ? 'OL <small>hors gamme</small>'
-    : v.toFixed(g.dec) + `<small>${g.unite}</small>`;
-
-  const rng = document.getElementById("rng-" + g.id);
-  if (rng){
-    rng.max = borneCurseur(g.id);
-    if (Number(rng.value) !== v) rng.value = v;
-  }
-  const borne = document.getElementById("borne-" + g.id);
-  if (borne) borne.textContent = borneCurseur(g.id) + " " + g.unite;
-}
-function majToutes(){ GAZ.forEach(majLecture); }
-
-/* ---- seuils et gamme de mesure ---- */
-const grilleSeuils = document.getElementById("seuils");
-function majSeuils(){
-  grilleSeuils.querySelectorAll(".rangee").forEach(n => n.remove());
-  for (const g of GAZ){
-    const nom = document.createElement("span");
-    nom.className = "g rangee"; nom.innerHTML = `${g.nom} <span style="color:#8b939e">${g.unite}</span>`;
-    grilleSeuils.appendChild(nom);
-
-    const champ = (valeur, appliquer) => {
-      const c = document.createElement("input");
-      c.className = "rangee";
-      c.type = "number"; c.step = g.pas; c.min = 0;
-      c.value = valeur;
-      c.addEventListener("change", () => { appliquer(Number(c.value)); majToutes(); envoyer(); });
-      grilleSeuils.appendChild(c);
-    };
-
-    champ(etat.seuils[g.id][0], v => etat.seuils[g.id][0] = v);
-    champ(etat.seuils[g.id][1], v => etat.seuils[g.id][1] = v);
-    champ(etat.gamme[g.id], v => {
-      etat.gamme[g.id] = Math.max(v, 1);
-      // La consigne ne peut pas dépasser d'un cran la nouvelle gamme.
-      etat.cibles[g.id] = Math.min(Number(etat.cibles[g.id]), borneCurseur(g.id));
-    });
-  }
-}
-
-/* ---- scénarios ---- */
-const SCENARIOS = [
-  {t:"Air libre",        d:"Atmosphère saine",              v:{h2s:0,  co:0,   o2:20.9, lel:0}},
-  {t:"Fuite de gaz",     d:"LIE 18 %, montée en cave",      v:{h2s:0,  co:0,   o2:20.6, lel:18}},
-  {t:"ATEX imminente",   d:"LIE 65 %, repli immédiat",      v:{h2s:0,  co:0,   o2:20.2, lel:65}},
-  {t:"Feu couvant",      d:"CO 320 ppm en volume clos",     v:{h2s:0,  co:320, o2:19.8, lel:4}},
-  {t:"Chaufferie",       d:"CO 60 ppm, appareil défaillant",v:{h2s:0,  co:60,  o2:20.7, lel:0}},
-  {t:"Réseau d'égout",   d:"H₂S 28 ppm, O₂ 18,4 %",         v:{h2s:28, co:12,  o2:18.4, lel:6}},
-  {t:"Manque d'oxygène", d:"O₂ 17,2 %, espace confiné",     v:{h2s:0,  co:0,   o2:17.2, lel:0}},
-  {t:"Silo agricole",    d:"O₂ 15,5 %, CO₂ non mesuré",     v:{h2s:5,  co:0,   o2:15.5, lel:2}}
-];
-const boiteScenarios = document.getElementById("scenarios");
-for (const s of SCENARIOS){
-  const b = document.createElement("button");
-  b.innerHTML = `<b>${s.t}</b><i>${s.d}</i>`;
-  b.addEventListener("click", () => { etat.cibles = {...s.v}; majToutes(); envoyer(); });
-  boiteScenarios.appendChild(b);
-}
-
-/* ---- réglages et commandes ---- */
-document.getElementById("reponse").addEventListener("change", e => {
-  etat.reponse = Number(e.target.value); envoyer();
-});
-document.getElementById("bruit").addEventListener("change", e => {
-  etat.bruit = e.target.checked; envoyer();
-});
-document.getElementById("airNeuf").addEventListener("click", () => {
-  etat.cibles = {h2s:0, co:0, o2:20.9, lel:0}; majToutes(); envoyer();
-});
-document.getElementById("raz").addEventListener("click", () => {
-  etat.raz = (etat.raz || 0) + 1; envoyer();
-});
-
-construire();
-
-/* =======================================================================
-   Code d'exercice et lien à transmettre à l'équipe
-   ======================================================================= */
-const champSalle = document.getElementById("salle");
-const lienEcran = document.getElementById("lienEcran");
-champSalle.value = Liaison.salle;
-
-function urlEcran(){
-  const base = location.href.split("?")[0].replace(/[^/]*$/, "explo.html");
-  return base + "?salle=" + encodeURIComponent(champSalle.value || "defaut");
-}
-function majLien(){ lienEcran.textContent = urlEcran(); }
-majLien();
-
-champSalle.addEventListener("input", majLien);
-champSalle.addEventListener("change", () => {
-  const code = (champSalle.value || "defaut").replace(/[^A-Za-z0-9_-]/g, "");
-  location.search = "?salle=" + encodeURIComponent(code || "defaut");
-});
-
-document.getElementById("ouvrir").addEventListener("click", () => {
-  window.open(urlEcran(), "_blank", "noopener");
-});
-document.getElementById("copier").addEventListener("click", async () => {
-  const bouton = document.getElementById("copier");
-  try{
-    await navigator.clipboard.writeText(urlEcran());
-    bouton.textContent = "Lien copié";
-  }catch(e){
-    bouton.textContent = "Copie refusée — sélectionnez le lien";
-  }
-  setTimeout(() => { bouton.textContent = "Copier le lien de l'écran"; }, 2500);
-});
-</script>
+<script src="js/config.js"></script>
+<script src="js/mesure.js"></script>
+<script src="js/liaison.js"></script>
+<script src="js/controle.js"></script>
 </body>
 </html>

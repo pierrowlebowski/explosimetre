@@ -1,0 +1,60 @@
+/* ===========================================================================
+ * commun.css — ce que les deux pages partagent
+ * ==========================================================================*/
+
+:root{
+  /* Interface */
+  --fond:#0d0f12;
+  --carte:#161a20;
+  --bord:#242a33;
+  --texte:#e7e9ec;
+  --doux:#8b939e;
+
+  /* Signalisation */
+  --vert:#25d366;
+  --orange:#ffb200;
+  --rouge:#ff3b30;
+  --jaune:#ffd400;
+
+  /* Détecteur */
+  --jaune-haut:#ffe250;
+  --jaune-bas:#f0bf00;
+  --lcd:#c3c8b8;
+  --lcd-encre:#111310;
+  --lcd-fantome:rgba(17,19,16,.07);
+  --ambre:#ffb200;
+}
+
+*{ box-sizing:border-box; -webkit-tap-highlight-color:transparent }
+
+body{
+  margin:0;
+  background:var(--fond);
+  color:var(--texte);
+  font-family:"Segoe UI",system-ui,-apple-system,Roboto,sans-serif;
+}
+
+/* --- Voyant de liaison --------------------------------------------------- */
+
+.etat{
+  display:flex; align-items:center; gap:8px;
+  font-size:12.5px; color:var(--doux); white-space:nowrap;
+}
+.voyant{
+  width:12px; height:12px; border-radius:50%; flex:0 0 auto;
+  background:#4b525c; box-shadow:0 0 0 3px rgba(255,255,255,.04);
+  transition:background .2s, box-shadow .2s;
+}
+.voyant.ok    { background:var(--vert);   box-shadow:0 0 10px 2px rgba(37,211,102,.55) }
+.voyant.local { background:var(--orange); box-shadow:0 0 10px 2px rgba(255,178,0,.45) }
+.voyant.ko    { background:var(--rouge);  box-shadow:0 0 10px 2px rgba(255,59,48,.5) }
+
+/* --- Textes secondaires -------------------------------------------------- */
+
+.aide{ font-size:12px; color:var(--doux); line-height:1.55; margin:0 }
+.aide a{ color:var(--jaune) }
+.aide b{ color:var(--texte); font-weight:600 }
+
+@media (prefers-reduced-motion:reduce){
+  .clignote{ animation:none }
+}
