@@ -74,19 +74,28 @@
 <div class="carte">
   <h2>Lien pour l'équipe</h2>
   <div class="reglage">
-    <label for="salle">Code d'exercice<small>Deux exercices peuvent tourner en parallèle avec des codes différents</small></label>
-    <input type="text" id="salle" maxlength="20">
+    <label for="salle">Code d'exercice<small>Lettres sans accent et chiffres uniquement — chaque exercice le sien</small></label>
+    <input type="text" id="salle" maxlength="20"
+           inputmode="latin" autocapitalize="none" autocomplete="off" spellcheck="false">
   </div>
   <div class="actions" style="margin-top:12px">
-    <button class="secondaire" id="copier">Copier le lien de l'écran</button>
+    <button class="principal"  id="partager" hidden>Partager le lien</button>
+    <button class="secondaire" id="copier">Copier le lien</button>
     <button class="secondaire" id="ouvrir">Ouvrir l'écran</button>
   </div>
   <p class="aide" style="margin-top:12px" id="lienEcran"></p>
+
+  <div class="qr">
+    <div class="cadreQr" id="qr"></div>
+    <p class="aide">À scanner avec l'appareil photo du téléphone pour ouvrir
+       directement l'écran du détecteur.</p>
+  </div>
 </div>
 
 <script src="js/config.js"></script>
 <script src="js/mesure.js"></script>
 <script src="js/liaison.js"></script>
+<script src="js/qr.js"></script>
 <script src="js/controle.js"></script>
 </body>
 </html>

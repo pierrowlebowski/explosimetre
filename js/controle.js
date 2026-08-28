@@ -5,6 +5,25 @@
 (() => {
   'use strict';
 
+  /* --- Code d'exercice ------------------------------------------------------
+   * Il voyage dans une adresse et doit se dicter au téléphone sans ambiguïté :
+   * on n'accepte que des lettres sans accent et des chiffres. Tout le reste —
+   * espaces, accents, ponctuation, majuscules — est converti ou écarté.
+   */
+  const nettoyer = brut => brut
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")   // é → e
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
+
+  /* Une adresse portant un code non conforme est corrigée avant toute autre
+     chose : sinon le pupitre piloterait une salle en affichant le lien d'une
+     autre. Les anciens liens se trouvent ainsi remis en forme d'eux-mêmes. */
+  const demande = new URLSearchParams(location.search).get("salle");
+  if (demande !== null && nettoyer(demande) !== demande){
+    location.replace(location.pathname + "?salle=" + (nettoyer(demande) || "defaut"));
+    return;
+  }
+
   let etat = structuredClone(ETAT_DEFAUT);
   let premierRecu = false;
 
@@ -145,36 +164,79 @@
 
   const champSalle = document.getElementById("salle");
   const lienEcran = document.getElementById("lienEcran");
-  champSalle.value = Liaison.salle;
+  const boiteQr = document.getElementById("qr");
+
+  champSalle.value = nettoyer(Liaison.salle) || "defaut";
 
   const urlEcran = () =>
     location.href.split("?")[0].replace(/[^/]*$/, "explo.html")
-    + "?salle=" + encodeURIComponent(champSalle.value || "defaut");
+    + "?salle=" + (champSalle.value || "defaut");
 
-  const majLien = () => { lienEcran.textContent = urlEcran(); };
-  majLien();
+  function majLien(){
+    const url = urlEcran();
+    lienEcran.textContent = url;
+    try{ boiteQr.innerHTML = QR.svg(url); }
+    catch(e){ boiteQr.innerHTML = ""; }
+  }
 
-  champSalle.addEventListener("input", majLien);
-  champSalle.addEventListener("change", () => {
-    const code = (champSalle.value || "defaut").replace(/[^A-Za-z0-9_-]/g, "");
-    location.search = "?salle=" + encodeURIComponent(code || "defaut");
+  /* On réécrit le champ sans faire sauter le curseur à la fin. */
+  champSalle.addEventListener("input", () => {
+    const avant = champSalle.value.slice(0, champSalle.selectionStart);
+    const propre = nettoyer(champSalle.value);
+    if (propre !== champSalle.value){
+      const position = nettoyer(avant).length;
+      champSalle.value = propre;
+      champSalle.setSelectionRange(position, position);
+    }
+    majLien();
   });
+
+  champSalle.addEventListener("change", () => {
+    const code = nettoyer(champSalle.value) || "defaut";
+    if (code !== Liaison.salle) location.search = "?salle=" + code;
+  });
+
+  majLien();
 
   document.getElementById("ouvrir").addEventListener("click", () => {
     window.open(urlEcran(), "_blank", "noopener");
   });
 
-  document.getElementById("copier").addEventListener("click", async () => {
-    const bouton = document.getElementById("copier");
-    const texteOrigine = "Copier le lien de l'écran";
+  /* Retour visible sur un bouton, puis remise du libellé d'origine. */
+  function repondre(bouton, message){
+    const origine = bouton.dataset.libelle || bouton.textContent;
+    bouton.dataset.libelle = origine;
+    bouton.textContent = message;
+    setTimeout(() => { bouton.textContent = origine; }, 2500);
+  }
+
+  document.getElementById("copier").addEventListener("click", async e => {
     try{
       await navigator.clipboard.writeText(urlEcran());
-      bouton.textContent = "Lien copié";
-    }catch(e){
-      bouton.textContent = "Copie refusée — sélectionnez le lien";
+      repondre(e.currentTarget, "Lien copié");
+    }catch(err){
+      repondre(e.currentTarget, "Copie refusée — sélectionnez le lien");
     }
-    setTimeout(() => { bouton.textContent = texteOrigine; }, 2500);
   });
+
+  /* Partage par le menu du téléphone : WhatsApp, SMS, courriel… Le bouton
+     reste caché là où ce menu n'existe pas, la copie y suffit. */
+  const boutonPartager = document.getElementById("partager");
+  if (typeof navigator.share === "function"){
+    boutonPartager.hidden = false;
+    boutonPartager.addEventListener("click", async e => {
+      try{
+        await navigator.share({
+          title: "Explosimètre d'exercice",
+          text: "Écran du détecteur — exercice « " + (champSalle.value || "defaut") + " »",
+          url: urlEcran()
+        });
+      }catch(err){
+        // Partage annulé par l'utilisateur : rien à signaler.
+        if (err && err.name !== "AbortError") repondre(e.currentTarget, "Partage impossible");
+      }
+    });
+  }
 
   construire();
 })();

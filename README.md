@@ -23,6 +23,7 @@ explosimetre/
 │   ├── mesure.js         règles d'alarme et de gamme, communes aux deux pages
 │   ├── liaison.js        synchronisation
 │   ├── afficheur.js      chiffres 7 segments
+│   ├── qr.js             QR code du lien, écrit à la main
 │   ├── son.js            les trois sons de l'appareil
 │   ├── veille.js         empêche le téléphone d'éteindre son écran
 │   ├── controle.js       logique du pupitre
@@ -74,6 +75,37 @@ fiable selon le navigateur. Passez par GitHub Pages ou par `serveur.py`.
 
 Le code d'exercice isole les manœuvres : deux groupes peuvent tourner en
 parallèle sans se perturber, chacun sur son propre code.
+
+### Distribuer le lien à l'équipe
+
+La carte *Lien pour l'équipe* du pupitre propose trois voies :
+
+- **Partager le lien** ouvre le menu de partage du téléphone — WhatsApp, SMS,
+  courriel. Le bouton n'apparaît que là où ce menu existe, c'est-à-dire sur
+  mobile et en HTTPS.
+- **Copier le lien**, pour le coller où l'on veut.
+- **Le QR code**, affiché sous le lien : l'équipe le scanne avec l'appareil
+  photo et arrive directement sur le bon exercice. C'est le plus rapide en
+  rassemblement, et rien à recopier.
+
+Le QR code est fabriqué par `js/qr.js`, écrit pour ce projet : aucune
+bibliothèque, aucun appel réseau, donc rien qui manque le jour où la manœuvre
+se déroule sans internet.
+
+### Le code d'exercice
+
+Il ne prend que des **lettres sans accent et des chiffres**. Le champ du
+pupitre convertit à la frappe : `CIS Nord` devient `cisnord`, `Équipe 1`
+devient `equipe1`. Une adresse portant un ancien code est remise en forme
+toute seule à l'ouverture.
+
+Cette sévérité a une raison : le code se dicte, se scanne et voyage dans une
+adresse. `CIS Nord` et `cis-nord` donneraient deux salles différentes, et
+personne ne comprendrait pourquoi l'écran ne répond pas.
+
+Attention : une page ouverte **sans `?salle=`** atterrit dans la salle
+`defaut`. Avec plusieurs exercices en parallèle, vérifiez que chaque lien
+distribué porte bien son code.
 
 ### L'écran du téléphone ne doit pas s'éteindre
 
