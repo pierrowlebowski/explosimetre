@@ -7,7 +7,14 @@ body{
   background:radial-gradient(120% 90% at 50% 0%,#1b1f25 0%,#0b0d10 70%);
   display:flex; flex-direction:column; align-items:center; justify-content:center;
   gap:14px; padding:16px; overflow:hidden;
-  user-select:none;
+
+  /* L'écran est un appareil, pas un document : on empêche iOS de sélectionner
+     le texte au doigt appuyé, d'ouvrir sa bulle « copier », et de zoomer au
+     double appui — geste qui sert ici à afficher les valeurs crêtes.
+     Le zoom à deux doigts, lui, reste possible. */
+  user-select:none; -webkit-user-select:none;
+  -webkit-touch-callout:none;
+  touch-action:manipulation;
 }
 html{ height:100% }
 
@@ -155,6 +162,11 @@ html{ height:100% }
 
 .bouton{
   width:56px; height:30px; border:0; border-radius:9px; cursor:pointer;
+  /* Répété sur le bouton : Safari ne fait pas hériter ces propriétés
+     aux contrôles de formulaire. */
+  user-select:none; -webkit-user-select:none;
+  -webkit-touch-callout:none;
+  touch-action:manipulation;
   background:linear-gradient(180deg,#7fa8ff,#3f6fd8);
   box-shadow:0 2px 0 #2a4c99, inset 0 1px 2px rgba(255,255,255,.6);
   transition:transform .06s;

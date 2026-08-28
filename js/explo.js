@@ -268,6 +268,10 @@
   });
   bouton.addEventListener("pointerleave", () => clearTimeout(minuteurLong));
 
+  /* Certaines versions d'iOS ouvrent quand même un menu sur appui long :
+     il n'a rien à proposer ici, et il vole le geste de sourdine. */
+  bouton.addEventListener("contextmenu", e => e.preventDefault());
+
   // --- Mise sous tension ---------------------------------------------------
 
   document.getElementById("demarrer").addEventListener("click", async () => {
