@@ -189,11 +189,8 @@
   // --- Vibreur --------------------------------------------------------------
 
   /* Tous les téléphones ne vibrent pas : iOS n'expose pas le vibreur aux pages
-     web, et Android l'ignore selon le profil sonore. On teste au démarrage,
-     dans le geste de l'utilisateur — seul moment où un navigateur l'accepte —
-     et on le dit quand c'est impossible, pour ne pas compter dessus à tort
-     pendant une manœuvre. */
-  const avertVibreur = document.getElementById("avertVibreur");
+     web, et Android l'ignore selon le profil sonore. Rien à faire dans ces
+     cas-là — les alarmes restent sonores et visuelles. */
   let vibreurPossible = false;
 
   /* motif : une durée en ms, ou une alternance [vibre, pause, vibre, …]. */
@@ -202,30 +199,12 @@
     try{ navigator.vibrate(motif); }catch(e){}
   }
 
-  function prevenir(texte){
-    avertVibreur.textContent = texte;
-    avertVibreur.hidden = false;
-  }
-
+  /* Appelé dans le geste de mise sous tension : plusieurs moteurs refusent
+     vibrate() une fois le contexte du geste perdu. La double impulsion sert
+     d'auto-test — une seule brève passerait inaperçue. */
   function testerVibreur(){
-    avertVibreur.hidden = true;
     vibreurPossible = typeof navigator.vibrate === "function";
-
-    if (!vibreurPossible){
-      return prevenir("Ce navigateur n'expose pas le vibreur — c'est le cas de "
-        + "tous les iPhone. Les alarmes restent sonores et visuelles.");
-    }
-    /* Un écran sans tactile n'a pas de vibreur : sur ordinateur, l'API répond
-       mais rien ne bouge, et on chercherait la panne longtemps. */
-    if (navigator.maxTouchPoints === 0){
-      return prevenir("Aucun vibreur sur cet appareil — page ouverte sur un "
-        + "ordinateur ? Les alarmes restent sonores et visuelles.");
-    }
-    /* Le navigateur peut refuser net : il le dit en renvoyant false. */
-    if (navigator.vibrate([120, 70, 120]) === false){
-      return prevenir("Le navigateur a refusé de faire vibrer l'appareil — "
-        + "mode silencieux ou économiseur de batterie ?");
-    }
+    vibrer([120, 70, 120]);
   }
 
   // --- Bouton bleu : rétroéclairage / sourdine ------------------------------
