@@ -196,21 +196,36 @@
   const avertVibreur = document.getElementById("avertVibreur");
   let vibreurPossible = false;
 
-  function vibrer(ms){
+  /* motif : une durée en ms, ou une alternance [vibre, pause, vibre, …]. */
+  function vibrer(motif){
     if (!vibreurPossible) return;
-    try{ navigator.vibrate(ms); }catch(e){}
+    try{ navigator.vibrate(motif); }catch(e){}
+  }
+
+  function prevenir(texte){
+    avertVibreur.textContent = texte;
+    avertVibreur.hidden = false;
   }
 
   function testerVibreur(){
+    avertVibreur.hidden = true;
     vibreurPossible = typeof navigator.vibrate === "function";
-    avertVibreur.hidden = vibreurPossible;
+
     if (!vibreurPossible){
-      avertVibreur.textContent =
-        "Ce navigateur n'expose pas le vibreur — c'est le cas de tous les "
-        + "iPhone. Les alarmes restent sonores et visuelles.";
-      return;
+      return prevenir("Ce navigateur n'expose pas le vibreur — c'est le cas de "
+        + "tous les iPhone. Les alarmes restent sonores et visuelles.");
     }
-    vibrer(80);   // bref retour tactile : l'appareil confirme qu'il répond
+    /* Un écran sans tactile n'a pas de vibreur : sur ordinateur, l'API répond
+       mais rien ne bouge, et on chercherait la panne longtemps. */
+    if (navigator.maxTouchPoints === 0){
+      return prevenir("Aucun vibreur sur cet appareil — page ouverte sur un "
+        + "ordinateur ? Les alarmes restent sonores et visuelles.");
+    }
+    /* Le navigateur peut refuser net : il le dit en renvoyant false. */
+    if (navigator.vibrate([120, 70, 120]) === false){
+      return prevenir("Le navigateur a refusé de faire vibrer l'appareil — "
+        + "mode silencieux ou économiseur de batterie ?");
+    }
   }
 
   // --- Bouton bleu : rétroéclairage / sourdine ------------------------------
@@ -278,6 +293,7 @@
 
   document.getElementById("demarrer").addEventListener("click", async () => {
     document.getElementById("voile").classList.add("parti");
+    testerVibreur();                   // dans le geste : certains moteurs l'exigent
     mesure = {...etat.cibles};
     historique.length = 0;
     picActif = false;
@@ -292,7 +308,6 @@
     niveauCourant = -1;                // force la réévaluation de l'alarme
     rafraichir();
     tenirEcranAllume();
-    testerVibreur();
   });
 
   // --- Veille du téléphone -------------------------------------------------
