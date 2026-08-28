@@ -60,7 +60,7 @@ const ETAT_DEFAUT = {
   seuils: {h2s:[5,10],  co:[30,60],                   // [alarme basse, haute]
            o2:[19.5,23.5], lel:[10,30]},
   gamme:  {h2s:100, co:500, o2:30, lel:100},          // mesure maximum, au-delà : OL
-  reponse: 20,                                        // temps de réponse T90, en secondes
+  reponse: 3,                                         // temps de réponse T90, en secondes
   raz: 0                                              // incrément = affichage immédiat
 };
 
