@@ -178,6 +178,35 @@
     envoyer();
   });
 
+  /* Une salle garde ses réglages d'une fois sur l'autre — sinon ceux du
+     formateur seraient perdus à chaque mise à jour. Ce bouton la réaligne sur
+     les valeurs de config.js. Il efface un travail de réglage : il demande
+     donc confirmation, en changeant son propre libellé. */
+  document.getElementById("usine").addEventListener("click", e => {
+    const bouton = e.currentTarget;
+
+    if (!bouton.dataset.arme){
+      bouton.dataset.arme = "1";
+      setTimeout(() => { delete bouton.dataset.arme; }, 2500);
+      return repondre(bouton, "Confirmer ?");
+    }
+    delete bouton.dataset.arme;
+
+    etat.seuils = structuredClone(ETAT_DEFAUT.seuils);
+    etat.gamme = structuredClone(ETAT_DEFAUT.gamme);
+    etat.reponse = ETAT_DEFAUT.reponse;
+    // Une gamme réduite ne doit pas laisser une consigne au-dessus de son maximum.
+    for (const g of GAZ){
+      etat.cibles[g.id] = Math.min(Number(etat.cibles[g.id]), Mesure.borneCurseur(etat, g.id));
+    }
+
+    majSeuils();
+    majToutes();
+    document.getElementById("reponse").value = String(etat.reponse);
+    envoyer();
+    repondre(bouton, "Réglages rétablis");
+  });
+
   // --- Code d'exercice et lien pour l'équipe -------------------------------
 
   const champSalle = document.getElementById("salle");

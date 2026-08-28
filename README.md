@@ -267,9 +267,12 @@ sans conséquence ; utilisez simplement des codes peu devinables si vous tenez
 Tous modifiables depuis le pupitre, et dans `ETAT_DEFAUT` de `js/config.js`
 pour changer le point de départ.
 
-Ces seuils ne s'appliquent qu'aux **salles nouvelles**. Une salle déjà ouverte
-garde les valeurs enregistrées lors de sa création : pour l'aligner, corrigez
-les cases du pupitre, ou repartez sur un nouveau code d'exercice.
+Ces valeurs ne s'appliquent qu'à la **création** d'une salle. Une salle déjà
+ouverte garde ensuite les siennes — sinon les réglages d'un formateur seraient
+écrasés à chaque mise à jour du projet. Pour réaligner une salle existante sur
+`js/config.js`, le bouton **Réglages d'usine** du pupitre, dans la carte
+*Commandes* : il remet les seuils, les gammes et le temps de réponse, sans
+toucher aux gaz en cours. Il demande confirmation, un second appui.
 
 ## Avertissement
 
