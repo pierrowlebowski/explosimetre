@@ -15,6 +15,8 @@
     .toLowerCase()
     .replace(/[^a-z0-9]/g, "");
 
+  const CLE_VERS_LIEN = "explo-vers-lien";
+
   /* Le champ du code se nettoie à la frappe sans que le curseur saute à la fin. */
   function brancherNettoyage(champ, apres){
     champ.addEventListener("input", () => {
@@ -44,6 +46,9 @@
     const entrer = () => {
       const code = nettoyer(champ.value);
       if (!code) return champ.focus();
+      /* L'exercice vient d'être créé : le geste suivant est de distribuer le
+         lien. On note le passage pour ouvrir la page sur cette carte. */
+      try{ sessionStorage.setItem(CLE_VERS_LIEN, "1"); }catch(e){}
       location.replace(location.pathname + "?salle=" + code);
     };
     bouton.addEventListener("click", entrer);
@@ -351,4 +356,27 @@
   }
 
   construire();
+
+  /* Arrivée depuis le voile : on déroule jusqu'au QR code et au bouton de
+     partage. La marque est consommée au passage, pour qu'un rechargement plus
+     tard en pleine manœuvre ramène bien en haut, sur les curseurs. */
+  (() => {
+    let venaitDuVoile = false;
+    try{
+      venaitDuVoile = sessionStorage.getItem(CLE_VERS_LIEN) === "1";
+      sessionStorage.removeItem(CLE_VERS_LIEN);
+    }catch(e){}
+    if (!venaitDuVoile) return;
+
+    /* Après le chargement complet, et pas avant : le navigateur restaure la
+       position de défilement en fin de chargement et annulerait la nôtre.
+       Saut direct, sans animation : la page doit s'ouvrir là, pas y descendre
+       sous les yeux du formateur — et une animation ne se joue pas dans un
+       onglet resté en arrière-plan pendant le chargement. */
+    const descendre = () => document.getElementById("carteLien")
+      .scrollIntoView({ block: "start" });
+
+    if (document.readyState === "complete") descendre();
+    else addEventListener("load", descendre, { once: true });
+  })();
 })();
