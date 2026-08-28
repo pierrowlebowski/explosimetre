@@ -269,10 +269,15 @@ pour changer le point de départ.
 
 Ces valeurs ne s'appliquent qu'à la **création** d'une salle. Une salle déjà
 ouverte garde ensuite les siennes — sinon les réglages d'un formateur seraient
-écrasés à chaque mise à jour du projet. Pour réaligner une salle existante sur
-`js/config.js`, le bouton **Réglages d'usine** du pupitre, dans la carte
-*Commandes* : il remet les seuils, les gammes et le temps de réponse, sans
-toucher aux gaz en cours. Il demande confirmation, un second appui.
+écrasés à chaque mise à jour du projet.
+
+Sur le pupitre, les seuils sont **en lecture seule**. Les formateurs partagent
+souvent la même salle — le QR code de connexion mène toujours à la même — et
+une valeur changée par mégarde vaudrait pour tout le monde. Le bouton
+**Modifier les seuils** ouvre les champs, et fait apparaître avec eux
+**Réglages d'usine**, qui réaligne la salle sur `js/config.js` : seuils,
+gammes et temps de réponse, sans toucher aux gaz en cours. Ce dernier demande
+confirmation par un second appui. « Terminer » reverrouille l'affichage.
 
 ## Avertissement
 

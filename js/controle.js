@@ -126,6 +126,11 @@
 
   const grilleSeuils = document.getElementById("seuils");
 
+  /* Le QR code des formateurs mène toujours à la même salle : les seuils y sont
+     partagés, et une valeur changée par mégarde vaudrait pour tout le monde.
+     Ils s'affichent donc en lecture seule, et il faut demander à les modifier. */
+  let modeEdition = false;
+
   function majSeuils(){
     grilleSeuils.querySelectorAll(".rangee").forEach(n => n.remove());
     for (const g of GAZ){
@@ -134,7 +139,14 @@
       nom.innerHTML = `${g.nom} <span class="unite">${g.unite}</span>`;
       grilleSeuils.appendChild(nom);
 
-      const champ = (valeur, appliquer) => {
+      const cellule = (valeur, appliquer) => {
+        if (!modeEdition){
+          const lecture = document.createElement("span");
+          lecture.className = "rangee lecture-seuil";
+          lecture.textContent = valeur;
+          grilleSeuils.appendChild(lecture);
+          return;
+        }
         const c = document.createElement("input");
         c.className = "rangee";
         c.type = "number"; c.step = g.pas; c.min = 0;
@@ -143,15 +155,38 @@
         grilleSeuils.appendChild(c);
       };
 
-      champ(etat.seuils[g.id][0], v => etat.seuils[g.id][0] = v);
-      champ(etat.seuils[g.id][1], v => etat.seuils[g.id][1] = v);
-      champ(etat.gamme[g.id], v => {
+      cellule(etat.seuils[g.id][0], v => etat.seuils[g.id][0] = v);
+      cellule(etat.seuils[g.id][1], v => etat.seuils[g.id][1] = v);
+      cellule(etat.gamme[g.id], v => {
         etat.gamme[g.id] = Math.max(v, 1);
         // La consigne ne peut pas dépasser d'un cran la nouvelle gamme.
         etat.cibles[g.id] = Math.min(Number(etat.cibles[g.id]), Mesure.borneCurseur(etat, g.id));
       });
     }
   }
+
+  const boutonModifier = document.getElementById("modifierSeuils");
+  const boutonUsine = document.getElementById("usine");
+  const aideSeuils = document.getElementById("aideSeuils");
+
+  const LECTURE = "Les seuils sont en lecture seule : plusieurs formateurs partagent "
+                + "la même salle, une valeur changée par mégarde vaudrait pour tout le monde.";
+  const EDITION = "Modification en cours. « Réglages d'usine » remet seuils, gammes "
+                + "et temps de réponse aux valeurs de js/config.js, sans toucher aux gaz en cours.";
+
+  function majModeSeuils(){
+    boutonModifier.textContent = modeEdition ? "Terminer" : "Modifier les seuils";
+    boutonModifier.classList.toggle("principal", modeEdition);
+    boutonModifier.classList.toggle("secondaire", !modeEdition);
+    boutonUsine.hidden = !modeEdition;
+    aideSeuils.textContent = modeEdition ? EDITION : LECTURE;
+    majSeuils();
+  }
+
+  boutonModifier.addEventListener("click", () => {
+    modeEdition = !modeEdition;
+    majModeSeuils();
+  });
 
   // --- Scénarios -----------------------------------------------------------
 
