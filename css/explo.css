@@ -73,7 +73,7 @@ html{ height:100% }
 .tete{
   grid-column:1 / -1;
   height:21px; margin-bottom:1px;
-  display:flex; align-items:center; gap:6px;
+  display:flex; align-items:center; justify-content:center; gap:6px;
   visibility:hidden;
 }
 .tete.visible{ visibility:visible }

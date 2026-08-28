@@ -180,10 +180,37 @@
       lueur.style.opacity = "1";
       retro.style.opacity = ".45";
       setTimeout(eteindre, r.balayage);
-      if (navigator.vibrate && !muet) navigator.vibrate(Math.round(r.balayage));
+      if (!muet) vibrer(Math.round(r.balayage));
     };
     salve();
     cycle = setInterval(salve, r.periode);
+  }
+
+  // --- Vibreur --------------------------------------------------------------
+
+  /* Tous les téléphones ne vibrent pas : iOS n'expose pas le vibreur aux pages
+     web, et Android l'ignore selon le profil sonore. On teste au démarrage,
+     dans le geste de l'utilisateur — seul moment où un navigateur l'accepte —
+     et on le dit quand c'est impossible, pour ne pas compter dessus à tort
+     pendant une manœuvre. */
+  const avertVibreur = document.getElementById("avertVibreur");
+  let vibreurPossible = false;
+
+  function vibrer(ms){
+    if (!vibreurPossible) return;
+    try{ navigator.vibrate(ms); }catch(e){}
+  }
+
+  function testerVibreur(){
+    vibreurPossible = typeof navigator.vibrate === "function";
+    avertVibreur.hidden = vibreurPossible;
+    if (!vibreurPossible){
+      avertVibreur.textContent =
+        "Ce navigateur n'expose pas le vibreur — c'est le cas de tous les "
+        + "iPhone. Les alarmes restent sonores et visuelles.";
+      return;
+    }
+    vibrer(80);   // bref retour tactile : l'appareil confirme qu'il répond
   }
 
   // --- Bouton bleu : rétroéclairage / sourdine ------------------------------
@@ -207,14 +234,14 @@
     pied.innerHTML = muet
       ? '<span class="sourdine">Sourdine activée</span> — appui long pour rétablir le son.'
       : AIDE_BOUTON;
-    if (navigator.vibrate) navigator.vibrate(20);
+    vibrer(20);
   }
 
   function entrerPic(){
     picActif = true;
     majTete();
     rafraichir();
-    if (navigator.vibrate) navigator.vibrate(20);
+    vibrer(20);
   }
 
   function quitterPic(){
@@ -265,6 +292,7 @@
     niveauCourant = -1;                // force la réévaluation de l'alarme
     rafraichir();
     tenirEcranAllume();
+    testerVibreur();
   });
 
   // --- Veille du téléphone -------------------------------------------------
