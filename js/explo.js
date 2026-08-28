@@ -49,8 +49,14 @@
   const voyant = document.getElementById("voyant");
   const texteEtat = document.getElementById("texteEtat");
 
+  /* Un écran ouvert depuis le pupitre par « Ouvrir l'écran » porte ?apercu :
+     c'est le formateur qui vérifie son réglage, pas un stagiaire. Il ne doit
+     donc pas peser dans le compteur. */
+  const apercu = new URLSearchParams(location.search).has("apercu");
+
   Liaison.demarrer({
     defaut: ETAT_DEFAUT,
+    role: apercu ? null : "ecran",
     surEtat(recu){
       etat = Mesure.completer(recu);
       if (etat.raz !== dernierRaz){

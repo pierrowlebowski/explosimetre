@@ -12,6 +12,15 @@ header{ display:flex; align-items:center; justify-content:space-between; gap:12p
 h1{ font-size:17px; margin:0; letter-spacing:.01em }
 h1 span{ display:block; font-size:12px; color:var(--doux); font-weight:400; margin-top:2px }
 
+/* Le compteur d'écrans, sous le voyant de liaison. */
+.entete-droite{ display:flex; flex-direction:column; align-items:flex-end; gap:5px }
+.compteur{
+  font-size:12.5px; color:var(--texte); white-space:nowrap;
+  display:flex; align-items:center; gap:6px;
+}
+.compteur b{ font-weight:700 }
+.compteur.vide{ color:var(--doux) }
+
 /* --- Cartes -------------------------------------------------------------- */
 
 .carte{

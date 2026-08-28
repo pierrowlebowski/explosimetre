@@ -107,6 +107,31 @@ Attention : une page ouverte **sans `?salle=`** atterrit dans la salle
 `defaut`. Avec plusieurs exercices en parallèle, vérifiez que chaque lien
 distribué porte bien son code.
 
+### Savoir combien d'écrans sont connectés
+
+Le pupitre affiche, sous le voyant de liaison, le nombre de détecteurs
+ouverts par l'équipe sur cette salle.
+
+Chaque écran dépose une fiche de présence et demande à Firebase de l'effacer
+si la liaison tombe. C'est le serveur qui constate la rupture : un téléphone
+éteint, à plat ou hors réseau n'a rien à annoncer en partant, et aucun signal
+envoyé par le téléphone ne serait fiable dans ces cas-là.
+
+Trois choses à savoir pour lire ce compteur sans se tromper :
+
+- **Il réagit avec du retard.** Firebase met plusieurs dizaines de secondes à
+  constater une coupure brutale, et un **délai de grâce de 15 secondes**
+  s'y ajoute avant de décompter l'écran. Ce délai évite que le compteur
+  clignote à chaque rechargement de page ou passage du wifi à la 4G.
+- **Il compte des écrans ouverts, pas des personnes.** Un stagiaire qui ouvre
+  le lien deux fois compte pour deux.
+- **L'aperçu du formateur n'est pas compté.** Le bouton « Ouvrir l'écran »
+  ajoute `&apercu=1` au lien : l'écran fonctionne normalement mais ne pèse pas
+  dans le compte. Le lien distribué à l'équipe, lui, ne porte pas cette marque.
+
+Le compteur reste masqué hors de Firebase — `serveur.py` et le mode local ne
+savent pas encore compter, et mieux vaut n'afficher rien qu'un zéro faux.
+
 ### L'écran du téléphone ne doit pas s'éteindre
 
 Un téléphone en veille ne sonne plus : l'exercice s'arrête. À la mise sous

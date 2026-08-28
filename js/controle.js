@@ -29,6 +29,23 @@
 
   const envoyer = () => Liaison.envoyer(etat);
 
+  // --- Compteur d'écrans ---------------------------------------------------
+
+  /* Compte les détecteurs ouverts par l'équipe sur cette salle. Un écran qui
+     disparaît met une quinzaine de secondes à être décompté — le temps que
+     Firebase constate la rupture, plus un délai de grâce. Le compte reste
+     masqué quand il n'est pas disponible : mieux vaut rien qu'un zéro faux. */
+  const compteur = document.getElementById("compteur");
+
+  function majCompteur(nombre){
+    if (nombre === null || nombre === undefined){ compteur.hidden = true; return; }
+    compteur.hidden = false;
+    compteur.classList.toggle("vide", nombre === 0);
+    compteur.innerHTML = nombre === 0
+      ? "Aucun écran connecté"
+      : "<b>" + nombre + "</b> écran" + (nombre > 1 ? "s connectés" : " connecté");
+  }
+
   // --- Liaison avec l'écran ------------------------------------------------
 
   const voyant = document.getElementById("voyant");
@@ -36,6 +53,7 @@
 
   Liaison.demarrer({
     defaut: ETAT_DEFAUT,
+    surPresence: majCompteur,
     surEtat(recu){
       // On ne se laisse écraser qu'au premier chargement : sinon les curseurs
       // sauteraient sous les doigts pendant qu'on les manipule.
@@ -198,8 +216,10 @@
 
   majLien();
 
+  /* L'aperçu du formateur porte une marque que le lien distribué n'a pas :
+     il s'affiche comme un vrai écran mais ne pèse pas dans le compteur. */
   document.getElementById("ouvrir").addEventListener("click", () => {
-    window.open(urlEcran(), "_blank", "noopener");
+    window.open(urlEcran() + "&apercu=1", "_blank", "noopener");
   });
 
   /* Retour visible sur un bouton, puis remise du libellé d'origine. */

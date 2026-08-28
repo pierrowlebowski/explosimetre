@@ -11,7 +11,9 @@
  * Deux exercices peuvent donc tourner en parallèle sans se marcher dessus.
  *
  * Usage :
- *   Liaison.demarrer({ defaut, surEtat(etat), surVoyant(niveau, texte) });
+ *   Liaison.demarrer({ defaut, surEtat(etat), surVoyant(niveau, texte),
+ *                      role: 'ecran',            // dépose une présence
+ *                      surPresence(nombre) });   // nombre d'écrans, ou null
  *   Liaison.envoyer(etat);
  * ==========================================================================*/
 
@@ -30,6 +32,8 @@ const Liaison = (() => {
   let ecrire = null;          // fonction d'écriture propre au transport
   let attente = null;         // minuterie d'anti-rebond
   let dernierEnvoi = '';      // pour ignorer l'écho de nos propres écritures
+  let role = null;            // 'ecran' dépose une présence ; null ne compte pas
+  let surPresence = null;     // rappelé avec le nombre d'écrans connectés
 
   // --- Utilitaires ---------------------------------------------------------
 
@@ -45,6 +49,58 @@ const Liaison = (() => {
     const texte = JSON.stringify(brut);
     if (texte === dernierEnvoi) return;   // c'est notre propre écriture
     surEtat(brut);
+  }
+
+  // --- Présence des écrans -------------------------------------------------
+  /* Chaque écran dépose une fiche sous sa salle et demande à Firebase de
+     l'effacer si la liaison tombe. C'est le serveur qui constate la rupture :
+     un téléphone éteint ou hors réseau n'a rien à annoncer en partant.
+     Les fiches vivent dans la salle, à côté de l'état ; les écritures du
+     pupitre fusionnent au lieu de remplacer, sinon elles les effaceraient. */
+
+  const DELAI_GRACE = 15000;   // ms avant de décompter un écran disparu
+
+  const vivants = new Set();   // écrans actuellement en ligne
+  const sursis = new Map();    // écrans disparus, encore dans leur délai de grâce
+
+  /* Identifiant stable pour l'onglet : un rechargement de page retrouve le
+     même, donc il ne se compte pas deux fois et ne fait pas clignoter le
+     compteur du formateur. */
+  function identifiant() {
+    const cle = 'explo-presence';
+    const neuf = () => Math.random().toString(36).slice(2, 10);
+    try {
+      let id = sessionStorage.getItem(cle);
+      if (!id) { id = neuf(); sessionStorage.setItem(cle, id); }
+      return id;
+    } catch (e) {
+      return neuf();
+    }
+  }
+
+  const annoncer = () => { if (surPresence) surPresence(vivants.size + sursis.size); };
+
+  /* Un écran qui disparaît n'est pas retiré tout de suite : un rechargement ou
+     un passage du wifi à la 4G ne doit pas faire bouger le compteur. */
+  function recenser(fiches) {
+    const presents = new Set(
+      Object.entries(fiches || {})
+        .filter(([, f]) => f && f.r === 'ecran')
+        .map(([id]) => id)
+    );
+
+    for (const id of presents) {
+      const minuteur = sursis.get(id);
+      if (minuteur) { clearTimeout(minuteur); sursis.delete(id); }
+    }
+    for (const id of vivants) {
+      if (presents.has(id) || sursis.has(id)) continue;
+      sursis.set(id, setTimeout(() => { sursis.delete(id); annoncer(); }, DELAI_GRACE));
+    }
+
+    vivants.clear();
+    for (const id of presents) vivants.add(id);
+    annoncer();
   }
 
   // --- 1. Firebase ---------------------------------------------------------
@@ -66,16 +122,37 @@ const Liaison = (() => {
     // Première lecture : sert aussi de test de validité de la configuration.
     const photo = await avecDelai(bdd.get(noeud), 8000, 'Firebase ne répond pas');
     if (photo.exists()) recevoir(photo.val());
-    else await bdd.set(noeud, defaut);
+    else await bdd.update(noeud, defaut);
 
     bdd.onValue(noeud, s => recevoir(s.val()));
+
+    /* La fiche de présence se redépose à chaque reconnexion : l'ordre
+       d'effacement enregistré précédemment a déjà été consommé par le serveur. */
+    const fiche = role === 'ecran'
+      ? bdd.ref(db, 'exercices/' + salle + '/presences/' + identifiant())
+      : null;
+
     bdd.onValue(bdd.ref(db, '.info/connected'), s => {
-      surVoyant(s.val() ? 'ok' : 'ko',
-                s.val() ? 'En ligne — salle « ' + salle + ' »'
+      const enLigne = s.val();
+      surVoyant(enLigne ? 'ok' : 'ko',
+                enLigne ? 'En ligne — salle « ' + salle + ' »'
                         : 'Hors ligne — reconnexion…');
+      if (!enLigne || !fiche) return;
+      bdd.onDisconnect(fiche).remove()
+        .then(() => bdd.set(fiche, { r: 'ecran', t: bdd.serverTimestamp() }))
+        .catch(e => console.warn('Présence non déposée :', e.message));
     });
 
-    ecrire = etat => bdd.set(noeud, etat);
+    /* Le pupitre compte les écrans. Si les règles de la base refusent la
+       lecture, mieux vaut ne rien afficher qu'un zéro trompeur. */
+    if (surPresence) {
+      bdd.onValue(bdd.ref(db, 'exercices/' + salle + '/presences'),
+        s => recenser(s.val()),
+        e => { console.warn('Présences illisibles :', e.message); surPresence(null); });
+    }
+
+    // Fusion plutôt que remplacement : les fiches de présence doivent survivre.
+    ecrire = etat => bdd.update(noeud, etat);
     return 'firebase';
   }
 
@@ -95,7 +172,10 @@ const Liaison = (() => {
       }, 4000);
 
       flux.onmessage = e => {
-        if (premier) { premier = false; clearTimeout(minuteur); resoudre('serveur'); }
+        if (premier) {
+          premier = false; clearTimeout(minuteur); resoudre('serveur');
+          if (surPresence) surPresence(null);   // compte indisponible hors Firebase
+        }
         surVoyant('ok', 'Connecté au serveur local');
         recevoir(JSON.parse(e.data));
       };
@@ -137,6 +217,7 @@ const Liaison = (() => {
       if (canal) canal.postMessage(etat);
     };
     surVoyant('local', 'Mode local — même appareil uniquement');
+    if (surPresence) surPresence(null);   // compte indisponible hors Firebase
     return 'local';
   }
 
@@ -146,6 +227,8 @@ const Liaison = (() => {
     surEtat = options.surEtat || surEtat;
     surVoyant = options.surVoyant || surVoyant;
     defaut = options.defaut || {};
+    role = options.role || null;
+    surPresence = options.surPresence || null;
     surVoyant('', 'Connexion…');
 
     const essais = prefere === 'auto' ? ['firebase', 'serveur', 'local'] : [prefere];
