@@ -103,13 +103,13 @@ html{ height:100% }
 .chiffre{ position:relative; height:100%; margin-left:1px }
 .chiffre svg{ height:100%; display:block }
 .chiffre.pt::after{
-  content:""; position:absolute; right:-10px; bottom:2px;
+  content:""; position:absolute; right:-14px; bottom:2px;
   width:7px; height:7px; background:var(--lcd-encre);
 }
 /* Le point est posé dans l'espace à droite de son chiffre, pas contre lui :
-   3 px le séparent de l'entier, 4 px de la décimale, qui doit donc s'écarter
+   7 px le séparent de l'entier, 5 px de la décimale, qui doit donc s'écarter
    de la largeur du point plus les deux blancs. */
-.chiffre.pt + .chiffre{ margin-left:14px }
+.chiffre.pt + .chiffre{ margin-left:19px }
 .seg{ fill:var(--lcd-fantome) }
 .seg.on{ fill:var(--lcd-encre) }
 
