@@ -65,9 +65,12 @@ fiable selon le navigateur. Passez par GitHub Pages ou par `serveur.py`.
 
 ## Déroulement d'un exercice
 
-1. Le formateur ouvre le lien du **pupitre**.
-2. Dans la carte *Lien pour l'équipe*, il saisit un code d'exercice
-   (`cis-nord`, `manoeuvre-12`… ce qu'il veut) puis copie le lien affiché.
+1. Le formateur ouvre le lien du **pupitre**. La page lui demande d'abord un
+   **code d'exercice** (`exo1`, `cisnord`, `manoeuvre12`… ce qu'il veut) et ne
+   se connecte à rien tant qu'il n'a pas répondu — sans quoi tous les
+   formateurs se retrouveraient dans la même salle sans le savoir.
+2. Dans la carte *Lien pour l'équipe*, il partage le lien, le copie, ou fait
+   scanner le QR code.
 3. L'équipe ouvre ce lien et appuie sur **Démarrer l'appareil** : la séquence
    d'allumage est jouée, comme à la mise sous tension du vrai détecteur. Cet
    appui est obligatoire, les navigateurs mobiles refusent de sortir du son

@@ -15,11 +15,49 @@
     .toLowerCase()
     .replace(/[^a-z0-9]/g, "");
 
+  /* Le champ du code se nettoie à la frappe sans que le curseur saute à la fin. */
+  function brancherNettoyage(champ, apres){
+    champ.addEventListener("input", () => {
+      const avant = champ.value.slice(0, champ.selectionStart);
+      const propre = nettoyer(champ.value);
+      if (propre !== champ.value){
+        const position = nettoyer(avant).length;
+        champ.value = propre;
+        champ.setSelectionRange(position, position);
+      }
+      if (apres) apres();
+    });
+  }
+
+  /* Sans code dans l'adresse, on ne se connecte à rien : le pupitre le demande.
+     Avant, tout le monde atterrissait dans la même salle « defaut » — et deux
+     formateurs s'y retrouvaient à piloter le même exercice sans le savoir. */
+  function demanderCode(){
+    const voile = document.getElementById("voile");
+    const champ = document.getElementById("salleDepart");
+    const bouton = document.getElementById("entrer");
+
+    voile.hidden = false;
+    champ.focus();
+    brancherNettoyage(champ);
+
+    const entrer = () => {
+      const code = nettoyer(champ.value);
+      if (!code) return champ.focus();
+      location.replace(location.pathname + "?salle=" + code);
+    };
+    bouton.addEventListener("click", entrer);
+    champ.addEventListener("keydown", e => { if (e.key === "Enter") entrer(); });
+  }
+
+  const demande = new URLSearchParams(location.search).get("salle");
+
+  if (!demande){ demanderCode(); return; }
+
   /* Une adresse portant un code non conforme est corrigée avant toute autre
      chose : sinon le pupitre piloterait une salle en affichant le lien d'une
      autre. Les anciens liens se trouvent ainsi remis en forme d'eux-mêmes. */
-  const demande = new URLSearchParams(location.search).get("salle");
-  if (demande !== null && nettoyer(demande) !== demande){
+  if (nettoyer(demande) !== demande){
     location.replace(location.pathname + "?salle=" + (nettoyer(demande) || "defaut"));
     return;
   }
@@ -261,17 +299,7 @@
     catch(e){ boiteQr.innerHTML = ""; }
   }
 
-  /* On réécrit le champ sans faire sauter le curseur à la fin. */
-  champSalle.addEventListener("input", () => {
-    const avant = champSalle.value.slice(0, champSalle.selectionStart);
-    const propre = nettoyer(champSalle.value);
-    if (propre !== champSalle.value){
-      const position = nettoyer(avant).length;
-      champSalle.value = propre;
-      champSalle.setSelectionRange(position, position);
-    }
-    majLien();
-  });
+  brancherNettoyage(champSalle, majLien);
 
   champSalle.addEventListener("change", () => {
     const code = nettoyer(champSalle.value) || "defaut";

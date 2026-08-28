@@ -10,6 +10,18 @@
 </head>
 <body>
 
+<!-- Sans code dans l'adresse, le pupitre ne se connecte à rien : il demande. -->
+<div class="voile" id="voile" hidden>
+  <h1>Code d'exercice</h1>
+  <p>Choisissez un code pour cet exercice. L'équipe recevra un lien qui le
+     porte : deux exercices menés en parallèle sur des codes différents ne se
+     gênent pas.</p>
+  <input type="text" id="salleDepart" maxlength="20" placeholder="exo1"
+         inputmode="latin" autocapitalize="none" autocomplete="off" spellcheck="false">
+  <button id="entrer">Ouvrir le pupitre</button>
+  <p class="fin">Lettres sans accent et chiffres uniquement.</p>
+</div>
+
 <header>
   <h1>Pupitre de contrôle<span>Explosimètre d'exercice</span></h1>
   <div class="entete-droite">
