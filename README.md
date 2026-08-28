@@ -259,12 +259,17 @@ sans conséquence ; utilisez simplement des codes peu devinables si vous tenez
 
 | Gaz | Alarme basse | Alarme haute | Mesure maximum |
 |---|---|---|---|
-| H₂S | 10 ppm | 15 ppm | 100 ppm |
-| CO | 35 ppm | 200 ppm | 500 ppm |
+| H₂S | 5 ppm | 10 ppm | 100 ppm |
+| CO | 30 ppm | 60 ppm | 500 ppm |
 | O₂ | 19,5 % | 23,5 % | 30 % |
-| LIE | 10 % | 20 % | 100 % |
+| LIE | 10 % | 30 % | 100 % |
 
-Seuils usine courants du MicroClip, tous modifiables depuis le pupitre.
+Tous modifiables depuis le pupitre, et dans `ETAT_DEFAUT` de `js/config.js`
+pour changer le point de départ.
+
+Ces seuils ne s'appliquent qu'aux **salles nouvelles**. Une salle déjà ouverte
+garde les valeurs enregistrées lors de sa création : pour l'aligner, corrigez
+les cases du pupitre, ou repartez sur un nouveau code d'exercice.
 
 ## Avertissement
 
