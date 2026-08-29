@@ -68,9 +68,12 @@ fiable selon le navigateur. Passez par GitHub Pages ou par `serveur.py`.
 1. Le formateur ouvre le lien du **pupitre**. La page lui demande d'abord un
    **code d'exercice** (`exo1`, `cisnord`, `manoeuvre12`… ce qu'il veut) et ne
    se connecte à rien tant qu'il n'a pas répondu — sans quoi tous les
-   formateurs se retrouveraient dans la même salle sans le savoir.
-2. Dans la carte *Lien pour l'équipe*, il partage le lien, le copie, ou fait
-   scanner le QR code.
+   formateurs se retrouveraient dans la même salle sans le savoir. Il appuie
+   sur **Créer**.
+2. L'étape suivante lui présente le **QR code**, le lien et le bouton de
+   partage : c'est le moment de distribuer. Puis **Ouvrir le pupitre**, qui
+   ouvre les curseurs en haut de page. Ces mêmes informations restent
+   disponibles en bas du pupitre pendant tout l'exercice.
 3. L'équipe ouvre ce lien et appuie sur **Démarrer l'appareil** : la séquence
    d'allumage est jouée, comme à la mise sous tension du vrai détecteur. Cet
    appui est obligatoire, les navigateurs mobiles refusent de sortir du son

@@ -15,7 +15,7 @@
     .toLowerCase()
     .replace(/[^a-z0-9]/g, "");
 
-  const CLE_VERS_LIEN = "explo-vers-lien";
+  const CLE_PARTAGE = "explo-partage";
 
   /* Le champ du code se nettoie à la frappe sans que le curseur saute à la fin. */
   function brancherNettoyage(champ, apres){
@@ -46,9 +46,9 @@
     const entrer = () => {
       const code = nettoyer(champ.value);
       if (!code) return champ.focus();
-      /* L'exercice vient d'être créé : le geste suivant est de distribuer le
-         lien. On note le passage pour ouvrir la page sur cette carte. */
-      try{ sessionStorage.setItem(CLE_VERS_LIEN, "1"); }catch(e){}
+      /* L'exercice vient d'être créé : le geste suivant est de le distribuer.
+         On note le passage pour ouvrir sur l'étape de partage. */
+      try{ sessionStorage.setItem(CLE_PARTAGE, "1"); }catch(e){}
       location.replace(location.pathname + "?salle=" + code);
     };
     bouton.addEventListener("click", entrer);
@@ -290,6 +290,8 @@
   const champSalle = document.getElementById("salle");
   const lienEcran = document.getElementById("lienEcran");
   const boiteQr = document.getElementById("qr");
+  const qrPartage = document.getElementById("qrPartage");
+  const lienPartage = document.getElementById("lienPartage");
 
   champSalle.value = nettoyer(Liaison.salle) || "defaut";
 
@@ -299,9 +301,13 @@
 
   function majLien(){
     const url = urlEcran();
+    let dessin = "";
+    try{ dessin = QR.svg(url); }catch(e){}
+
     lienEcran.textContent = url;
-    try{ boiteQr.innerHTML = QR.svg(url); }
-    catch(e){ boiteQr.innerHTML = ""; }
+    boiteQr.innerHTML = dessin;
+    lienPartage.textContent = url;
+    qrPartage.innerHTML = dessin;
   }
 
   brancherNettoyage(champSalle, majLien);
@@ -327,25 +333,29 @@
     setTimeout(() => { bouton.textContent = origine; }, 2500);
   }
 
-  document.getElementById("copier").addEventListener("click", async e => {
-    try{
-      await navigator.clipboard.writeText(urlEcran());
-      repondre(e.currentTarget, "Lien copié");
-    }catch(err){
-      repondre(e.currentTarget, "Copie refusée — sélectionnez le lien");
-    }
-  });
+  /* Les mêmes deux actions servent à deux endroits : l'étape de partage juste
+     après la création, et la carte du bas pendant l'exercice. */
+  function brancherPartage(idPartager, idCopier){
+    document.getElementById(idCopier).addEventListener("click", async e => {
+      try{
+        await navigator.clipboard.writeText(urlEcran());
+        repondre(e.currentTarget, "Lien copié");
+      }catch(err){
+        repondre(e.currentTarget, "Copie refusée — sélectionnez le lien");
+      }
+    });
 
-  /* Partage par le menu du téléphone : WhatsApp, SMS, courriel… Le bouton
-     reste caché là où ce menu n'existe pas, la copie y suffit. */
-  const boutonPartager = document.getElementById("partager");
-  if (typeof navigator.share === "function"){
+    /* Partage par le menu du téléphone : WhatsApp, SMS, courriel… Le bouton
+       reste caché là où ce menu n'existe pas, la copie y suffit. */
+    const boutonPartager = document.getElementById(idPartager);
+    if (typeof navigator.share !== "function") return;
+
     boutonPartager.hidden = false;
     boutonPartager.addEventListener("click", async e => {
       try{
         await navigator.share({
           title: "Explosimètre d'exercice",
-          text: "Écran du détecteur — exercice « " + (champSalle.value || "defaut") + " »",
+          text: "Écran du détecteur — exercice « " + (champSalle.value || "defaut") + " »",
           url: urlEcran()
         });
       }catch(err){
@@ -355,28 +365,31 @@
     });
   }
 
+  brancherPartage("partager", "copier");
+  brancherPartage("partagerVoile", "copierVoile");
+
   construire();
 
-  /* Arrivée depuis le voile : on déroule jusqu'au QR code et au bouton de
-     partage. La marque est consommée au passage, pour qu'un rechargement plus
-     tard en pleine manœuvre ramène bien en haut, sur les curseurs. */
+  /* Exercice tout juste créé : le pupitre attend derrière l'étape de partage,
+     le temps que le formateur distribue le lien. La marque est consommée au
+     passage, pour qu'un rechargement plus tard en pleine manœuvre ouvre
+     directement sur les curseurs. */
   (() => {
-    let venaitDuVoile = false;
+    let vientDEtreCree = false;
     try{
-      venaitDuVoile = sessionStorage.getItem(CLE_VERS_LIEN) === "1";
-      sessionStorage.removeItem(CLE_VERS_LIEN);
+      vientDEtreCree = sessionStorage.getItem(CLE_PARTAGE) === "1";
+      sessionStorage.removeItem(CLE_PARTAGE);
     }catch(e){}
-    if (!venaitDuVoile) return;
+    if (!vientDEtreCree) return;
 
-    /* Après le chargement complet, et pas avant : le navigateur restaure la
-       position de défilement en fin de chargement et annulerait la nôtre.
-       Saut direct, sans animation : la page doit s'ouvrir là, pas y descendre
-       sous les yeux du formateur — et une animation ne se joue pas dans un
-       onglet resté en arrière-plan pendant le chargement. */
-    const descendre = () => document.getElementById("carteLien")
-      .scrollIntoView({ block: "start" });
+    const voile = document.getElementById("voile");
+    document.getElementById("etapeCode").hidden = true;
+    document.getElementById("etapePartage").hidden = false;
+    voile.hidden = false;
 
-    if (document.readyState === "complete") descendre();
-    else addEventListener("load", descendre, { once: true });
+    document.getElementById("ouvrirPupitre").addEventListener("click", () => {
+      voile.hidden = true;
+      scrollTo(0, 0);          // le pupitre s'ouvre en haut, sur les curseurs
+    });
   })();
 })();
